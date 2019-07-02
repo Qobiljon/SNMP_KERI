@@ -40,6 +40,7 @@
             this.toggleLogButton = new System.Windows.Forms.Button();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.nodeFlipRotateManualButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.topologyPictureBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -59,6 +60,7 @@
             this.setIpAddrButton.Text = "SET IP ADDR.";
             this.setIpAddrButton.UseVisualStyleBackColor = true;
             this.setIpAddrButton.Click += new System.EventHandler(this.setIpButton_Click);
+            this.setIpAddrButton.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // setMacAddrButton
             // 
@@ -71,6 +73,7 @@
             this.setMacAddrButton.Text = "SET MAC ADDR.";
             this.setMacAddrButton.UseVisualStyleBackColor = true;
             this.setMacAddrButton.Click += new System.EventHandler(this.setMacAddrButton_Click);
+            this.setMacAddrButton.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // setConnectionsButton
             // 
@@ -83,6 +86,7 @@
             this.setConnectionsButton.Text = "SET CONNECTIONS";
             this.setConnectionsButton.UseVisualStyleBackColor = true;
             this.setConnectionsButton.Click += new System.EventHandler(this.setConnectionsButton_Click);
+            this.setConnectionsButton.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // activeModeLabel
             // 
@@ -94,6 +98,7 @@
             this.activeModeLabel.TabIndex = 10;
             this.activeModeLabel.Text = "SETTING: [DUMMY]";
             this.activeModeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.activeModeLabel.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // topologyPictureBox
             // 
@@ -118,6 +123,7 @@
             this.saveTopologyButton.Text = "SAVE TOPOLOGY AS";
             this.saveTopologyButton.UseVisualStyleBackColor = false;
             this.saveTopologyButton.Click += new System.EventHandler(this.saveButton_Click);
+            this.saveTopologyButton.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // setNodeTypeButton
             // 
@@ -130,6 +136,7 @@
             this.setNodeTypeButton.Text = "SET NODE TYPE";
             this.setNodeTypeButton.UseVisualStyleBackColor = true;
             this.setNodeTypeButton.Click += new System.EventHandler(this.setNodeTypeButton_Click);
+            this.setNodeTypeButton.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // translationButton
             // 
@@ -142,9 +149,11 @@
             this.translationButton.Text = "MOVE (LOCATION)";
             this.translationButton.UseVisualStyleBackColor = true;
             this.translationButton.Click += new System.EventHandler(this.translationButton_Click);
+            this.translationButton.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // logTextBox
             // 
+            this.logTextBox.Cursor = System.Windows.Forms.Cursors.Arrow;
             this.logTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.logTextBox.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.logTextBox.Location = new System.Drawing.Point(0, 0);
@@ -154,6 +163,7 @@
             this.logTextBox.Size = new System.Drawing.Size(508, 762);
             this.logTextBox.TabIndex = 11;
             this.logTextBox.Text = "LOG:\r\n";
+            this.logTextBox.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // toggleLogButton
             // 
@@ -164,6 +174,7 @@
             this.toggleLogButton.TabIndex = 12;
             this.toggleLogButton.UseVisualStyleBackColor = true;
             this.toggleLogButton.Click += new System.EventHandler(this.toggleLogButton_Click);
+            this.toggleLogButton.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // splitContainer1
             // 
@@ -181,9 +192,11 @@
             this.splitContainer1.Size = new System.Drawing.Size(1491, 762);
             this.splitContainer1.SplitterDistance = 979;
             this.splitContainer1.TabIndex = 13;
+            this.splitContainer1.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.nodeFlipRotateManualButton);
             this.panel1.Controls.Add(this.saveTopologyButton);
             this.panel1.Controls.Add(this.setMacAddrButton);
             this.panel1.Controls.Add(this.translationButton);
@@ -196,6 +209,20 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1491, 47);
             this.panel1.TabIndex = 14;
+            this.panel1.Enter += new System.EventHandler(this.transferFocusToPictureBox);
+            // 
+            // nodeFlipRotateManualButton
+            // 
+            this.nodeFlipRotateManualButton.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.nodeFlipRotateManualButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this.nodeFlipRotateManualButton.Location = new System.Drawing.Point(580, 0);
+            this.nodeFlipRotateManualButton.Name = "nodeFlipRotateManualButton";
+            this.nodeFlipRotateManualButton.Size = new System.Drawing.Size(141, 47);
+            this.nodeFlipRotateManualButton.TabIndex = 11;
+            this.nodeFlipRotateManualButton.Text = "NODE FLIP/ROTATE MANUAL";
+            this.nodeFlipRotateManualButton.UseVisualStyleBackColor = true;
+            this.nodeFlipRotateManualButton.Click += new System.EventHandler(this.nodeFlipRotateManualButton_Click);
+            this.nodeFlipRotateManualButton.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // ConfigEditorForm
             // 
@@ -238,5 +265,6 @@
         private System.Windows.Forms.Button toggleLogButton;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Button nodeFlipRotateManualButton;
     }
 }

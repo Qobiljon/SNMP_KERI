@@ -81,6 +81,7 @@ namespace SNMP_KERI
             topologyPictureBox.MouseDown += nodeMouseDownHandler;
             topologyPictureBox.MouseUp += nodeMouseUpHandler;
             topologyPictureBox.MouseMove += nodeMouseMoveHandler;
+            topologyPictureBox.PreviewKeyDown += nodePreviewKeyDownHandler;
 
             topologyPictureBox.InitialImage = null;
             this.logTextBox = logTextBox;
@@ -472,6 +473,47 @@ namespace SNMP_KERI
 
                     if (inside)
                         this.activeNode.translateToLoc((short)(e.X - mouseLocDiffX), (short)(e.Y - mouseLocDiffY), this);
+                }
+        }
+
+        private void nodePreviewKeyDownHandler(object sender, PreviewKeyDownEventArgs e)
+        {
+            if (clickAction == TpClickAction.NONE)
+                return;
+
+            Point cursorLoc;
+            if (e.KeyCode == Keys.R || e.KeyCode == Keys.V || e.KeyCode == Keys.H)
+            {
+                Control parent = (sender as Control).Parent;
+                while (!(parent is Form))
+                    parent = parent.Parent;
+                Point pointInForm = parent.PointToClient(Cursor.Position);
+
+                cursorLoc = new Point(
+                    x: pointInForm.X + canvasPictureBox.Location.X,
+                    y: pointInForm.Y + canvasPictureBox.Location.Y
+                );
+            }
+            else return;
+
+            foreach (TopologyNode _node in nodes.Values)
+                if (_node.isInLocation(cursorLoc.X, cursorLoc.Y))
+                {
+                    switch (e.KeyCode)
+                    {
+                        case Keys.R: // Rotate action
+                            _node.rotate();
+                            break;
+                        case Keys.V:
+                            _node.flipVertically();
+                            break;
+                        case Keys.H:
+                            _node.flipHorizontally();
+                            break;
+                        default:
+                            break;
+                    }
+                    redrawTopology();
                 }
         }
 
@@ -901,6 +943,320 @@ namespace SNMP_KERI
                         x: startLoc.x,
                         y: (short)(startLoc.y + portC.Height)
                     ));
+                }
+            }
+
+            internal void flipVertically()
+            {
+                // rotate PORT_A (left port)
+                if (portA.startLoc.x == startLoc.x)
+                {
+                    if (portA.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |██    |      |      |
+                        //  |      |  ->  |      |
+                        //  |      |      |██    |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: (short)(endLoc.y - portA.Height)
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |██    |
+                        //  |      |  ->  |      |
+                        //  |██    |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: startLoc.y
+                        ));
+                    }
+                }
+                else
+                {
+                    if (portA.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |    ██|      |      |
+                        //  |      |  ->  |      |
+                        //  |      |      |    ██|
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: (short)(endLoc.y - portA.Height)
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |    ██|
+                        //  |      |  ->  |      |
+                        //  |    ██|      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: startLoc.y
+                        ));
+                    }
+                }
+
+                // rotate PORT_B (right port)
+                if (portB.startLoc.x == startLoc.x)
+                {
+                    if (portB.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |██    |      |      |
+                        //  |      |  ->  |      |
+                        //  |      |      |██    |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: (short)(endLoc.y - portB.Height)
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |██    |
+                        //  |      |  ->  |      |
+                        //  |██    |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: startLoc.y
+                        ));
+                    }
+                }
+                else
+                {
+                    if (portB.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |    ██|      |      |
+                        //  |      |  ->  |      |
+                        //  |      |      |    ██|
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: (short)(endLoc.y - portB.Height)
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |    ██|
+                        //  |      |  ->  |      |
+                        //  |    ██|      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: startLoc.y
+                        ));
+                    }
+                }
+
+                // rotate PORT_C (top port)
+                if (portC.startLoc.x == startLoc.x)
+                {
+                    //   ______        ______
+                    //  |      |      |      |
+                    //  |██    |  ->  |██    |
+                    //  |      |      |      |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                }
+                else if (portC.startLoc.y == startLoc.y)
+                {
+                    //   ______        ______
+                    //  |  ██  |      |      |
+                    //  |      |  ->  |      |
+                    //  |      |      |  ██  |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                    portC.translateToLoc(new TopologyLoc(
+                        x: short.MinValue,
+                        y: (short)(endLoc.y - portC.Height)
+                    ));
+                }
+                else if (portC.endLoc.x == endLoc.x)
+                {
+                    //   ______        ______
+                    //  |      |      |      |
+                    //  |    ██|  ->  |    ██|
+                    //  |      |      |      |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                }
+                else if (portC.endLoc.y == endLoc.y)
+                {
+                    //   ______        ______
+                    //  |      |      |  ██  |
+                    //  |      |  ->  |      |
+                    //  |  ██  |      |      |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                    portC.translateToLoc(new TopologyLoc(
+                        x: short.MinValue,
+                        y: startLoc.y
+                    ));
+                }
+            }
+
+            internal void flipHorizontally()
+            {
+                // rotate PORT_A (left port)
+                if (portA.startLoc.x == startLoc.x)
+                {
+                    if (portA.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |██    |      |    ██|
+                        //  |      |  ->  |      |
+                        //  |      |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: (short)(endLoc.x - portA.Width),
+                            y: short.MinValue
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |      |
+                        //  |      |  ->  |      |
+                        //  |██    |      |    ██|
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: (short)(endLoc.x - portA.Width),
+                            y: short.MinValue
+                        ));
+                    }
+                }
+                else
+                {
+                    if (portA.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |    ██|      |██    |
+                        //  |      |  ->  |      |
+                        //  |      |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: startLoc.x,
+                            y: short.MinValue
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |      |
+                        //  |      |  ->  |      |
+                        //  |    ██|      |██    |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: startLoc.x,
+                            y: short.MinValue
+                        ));
+                    }
+                }
+
+                // rotate PORT_B (right port)
+                if (portB.startLoc.x == startLoc.x)
+                {
+                    if (portB.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |██    |      |    ██|
+                        //  |      |  ->  |      |
+                        //  |      |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: (short)(endLoc.x - portB.Width),
+                            y: short.MinValue
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |      |
+                        //  |      |  ->  |      |
+                        //  |██    |      |    ██|
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: (short)(endLoc.x - portB.Width),
+                            y: short.MinValue
+                        ));
+                    }
+                }
+                else
+                {
+                    if (portB.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |    ██|      |██    |
+                        //  |      |  ->  |      |
+                        //  |      |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: startLoc.x,
+                            y: short.MinValue
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |      |
+                        //  |      |  ->  |      |
+                        //  |    ██|      |██    |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: startLoc.x,
+                            y: short.MinValue
+                        ));
+                    }
+                }
+
+                // rotate PORT_C (top port)
+                if (portC.startLoc.x == startLoc.x)
+                {
+                    //   ______        ______
+                    //  |      |      |      |
+                    //  |██    |  ->  |    ██|
+                    //  |      |      |      |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                    portC.translateToLoc(new TopologyLoc(
+                        x: (short)(endLoc.x - portC.Width),
+                        y: short.MinValue
+                    ));
+                }
+                else if (portC.startLoc.y == startLoc.y)
+                {
+                    //   ______        ______
+                    //  |  ██  |      |  ██  |
+                    //  |      |  ->  |      |
+                    //  |      |      |      |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                }
+                else if (portC.endLoc.x == endLoc.x)
+                {
+                    //   ______        ______
+                    //  |      |      |      |
+                    //  |    ██|  ->  |██    |
+                    //  |      |      |      |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                    portC.translateToLoc(new TopologyLoc(
+                        x: startLoc.x,
+                        y: short.MinValue
+                    ));
+                }
+                else if (portC.endLoc.y == endLoc.y)
+                {
+                    //   ______        ______
+                    //  |      |      |      |
+                    //  |      |  ->  |      |
+                    //  |  ██  |      |  ██  |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
                 }
             }
 

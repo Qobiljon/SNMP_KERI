@@ -89,6 +89,7 @@
             this.menuStrip1.Size = new System.Drawing.Size(1457, 24);
             this.menuStrip1.TabIndex = 3;
             this.menuStrip1.Text = "menuStrip1";
+            this.menuStrip1.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // configurationToolStripMenuItem
             // 
@@ -103,21 +104,21 @@
             // loadConfigurationToolStripMenuItem
             // 
             this.loadConfigurationToolStripMenuItem.Name = "loadConfigurationToolStripMenuItem";
-            this.loadConfigurationToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.loadConfigurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.loadConfigurationToolStripMenuItem.Text = "Load existing";
             this.loadConfigurationToolStripMenuItem.Click += new System.EventHandler(this.loadConfigurationToolStripMenuItem_Click);
             // 
             // newConfigurationToolStripMenuItem
             // 
             this.newConfigurationToolStripMenuItem.Name = "newConfigurationToolStripMenuItem";
-            this.newConfigurationToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.newConfigurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.newConfigurationToolStripMenuItem.Text = "Create new";
             this.newConfigurationToolStripMenuItem.Click += new System.EventHandler(this.newConfigurationToolStripMenuItem_Click);
             // 
             // editConfigurationToolStripMenuItem
             // 
             this.editConfigurationToolStripMenuItem.Name = "editConfigurationToolStripMenuItem";
-            this.editConfigurationToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.editConfigurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.editConfigurationToolStripMenuItem.Text = "Edit existing";
             this.editConfigurationToolStripMenuItem.Click += new System.EventHandler(this.editConfigurationToolStripMenuItem_Click);
             // 
@@ -133,7 +134,7 @@
             // testStartServiceToolStripMenuItem
             // 
             this.testStartServiceToolStripMenuItem.Name = "testStartServiceToolStripMenuItem";
-            this.testStartServiceToolStripMenuItem.Size = new System.Drawing.Size(173, 22);
+            this.testStartServiceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.testStartServiceToolStripMenuItem.Text = "Start SNMP service";
             this.testStartServiceToolStripMenuItem.Click += new System.EventHandler(this.testStartServiceToolStripMenuItem_Click);
             // 
@@ -141,7 +142,7 @@
             // 
             this.testStopServiceToolStripMenuItem.Enabled = false;
             this.testStopServiceToolStripMenuItem.Name = "testStopServiceToolStripMenuItem";
-            this.testStopServiceToolStripMenuItem.Size = new System.Drawing.Size(173, 22);
+            this.testStopServiceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.testStopServiceToolStripMenuItem.Text = "Stop SNMP service";
             this.testStopServiceToolStripMenuItem.Click += new System.EventHandler(this.testStopServiceToolStripMenuItem_Click);
             // 
@@ -161,7 +162,7 @@
             this.openLastEventLogFileToolStripMenuItem,
             this.openEventLogsDirectoryToolStripMenuItem});
             this.sNMPLogsToolStripMenuItem.Name = "sNMPLogsToolStripMenuItem";
-            this.sNMPLogsToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
+            this.sNMPLogsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.sNMPLogsToolStripMenuItem.Text = "Event logs";
             // 
             // openLastEventLogFileToolStripMenuItem
@@ -184,7 +185,7 @@
             this.openLastPacketLogFileToolStripMenuItem,
             this.openPacketLogsDirectoryToolStripMenuItem});
             this.sNMPPacketLogsToolStripMenuItem.Name = "sNMPPacketLogsToolStripMenuItem";
-            this.sNMPPacketLogsToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
+            this.sNMPPacketLogsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.sNMPPacketLogsToolStripMenuItem.Text = "Packet logs";
             // 
             // openLastPacketLogFileToolStripMenuItem
@@ -204,7 +205,7 @@
             // clearAllLogsToolStripMenuItem
             // 
             this.clearAllLogsToolStripMenuItem.Name = "clearAllLogsToolStripMenuItem";
-            this.clearAllLogsToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
+            this.clearAllLogsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.clearAllLogsToolStripMenuItem.Text = "Clear all logs";
             this.clearAllLogsToolStripMenuItem.Click += new System.EventHandler(this.clearAllLogsToolStripMenuItem_Click);
             // 
@@ -253,6 +254,7 @@
             this.hoverPanel.Name = "hoverPanel";
             this.hoverPanel.Size = new System.Drawing.Size(156, 148);
             this.hoverPanel.TabIndex = 17;
+            this.hoverPanel.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // hoverLabelLre
             // 
@@ -330,6 +332,7 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1457, 35);
             this.panel1.TabIndex = 19;
+            this.panel1.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // label1
             // 
@@ -341,6 +344,7 @@
             this.label1.TabIndex = 4;
             this.label1.Text = "LOGS FILTER:";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.label1.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // warningsCheckBox
             // 
@@ -355,6 +359,7 @@
             this.warningsCheckBox.TabIndex = 3;
             this.warningsCheckBox.Text = "WARNINGS";
             this.warningsCheckBox.UseVisualStyleBackColor = true;
+            this.warningsCheckBox.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // errorsCheckBox
             // 
@@ -369,6 +374,7 @@
             this.errorsCheckBox.TabIndex = 1;
             this.errorsCheckBox.Text = "ERRORS";
             this.errorsCheckBox.UseVisualStyleBackColor = true;
+            this.errorsCheckBox.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // splitContainer1
             // 
@@ -413,6 +419,7 @@
             this.logTextBox.Size = new System.Drawing.Size(681, 433);
             this.logTextBox.TabIndex = 15;
             this.logTextBox.Text = "";
+            this.logTextBox.Enter += new System.EventHandler(this.transferFocusToPictureBox);
             // 
             // MainForm
             // 

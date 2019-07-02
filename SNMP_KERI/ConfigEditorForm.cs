@@ -27,13 +27,7 @@ namespace SNMP_KERI
 
         internal void loadExistingConfig(string fileName)
         {
-            vis = new TopologyVisualizer(topologyPictureBox, logTextBox,
-                nodeNonLeftMouseDownDelegate: (node, e) =>
-                {
-                    if (e.Button == MouseButtons.Middle)
-                        node?.rotate();
-                }
-            );
+            vis = new TopologyVisualizer(topologyPictureBox, logTextBox);
             vis.importNodeXmls(fileName);
             log(key: "config", value: string.Format("xml config file loaded (source: {0})", fileName));
         }
@@ -202,11 +196,23 @@ namespace SNMP_KERI
             {
                 Thread.Sleep(100);
                 vis?.redrawTopology();
+                topologyPictureBox.BeginInvoke(new Action(() => { topologyPictureBox.Focus(); }));
             });
             redrawThread.Name = "Topology redraw thread";
             redrawThread.Start();
 
             translationButton.PerformClick();
+        }
+
+        private void transferFocusToPictureBox(object sender, EventArgs e)
+        {
+            topologyPictureBox.Focus();
+        }
+
+        private void nodeFlipRotateManualButton_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(this, "Hover over any node and you can click buttons:\n'R' to rotate the node (90 degrees)\n'V' to flip the node vertically\n'H' to flip the node horizontally", "Keyboard manual for node rotation/flipping");
+            topologyPictureBox.Focus();
         }
     }
 }

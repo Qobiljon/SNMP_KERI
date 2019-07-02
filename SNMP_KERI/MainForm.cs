@@ -401,5 +401,10 @@ namespace SNMP_KERI
             else
                 MessageBox.Show(this, "SNMP erase operation has been canceled!", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Hand);
         }
+
+        private void transferFocusToPictureBox(object sender, EventArgs e)
+        {
+            topologyPictureBox.Focus();
+        }
     }
 }
