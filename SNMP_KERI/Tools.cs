@@ -7,7 +7,6 @@ using Lextm.SharpSnmpLib.Messaging;
 using System.Drawing;
 using System.Net.NetworkInformation;
 using System.IO;
-using System.Threading.Tasks;
 using System.Text;
 
 
