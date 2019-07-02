@@ -338,7 +338,7 @@ namespace SNMP_KERI
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(this, "This application was created in Networking Systems Lab in Inha University.\n\nIf you have any feedback or suggestion, you can directly contact this application's developer by the email: kobiljon@nsl.inha.ac.kr (Kobiljon Toshnazarov)\n\nThank you =)", "About SNMP KERI v1.1 Application", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(this, "This application was created in Networking Systems Lab in Inha University.\n\nIf you have any feedback or suggestion, you can directly contact this application's developer by the email: kobiljon@nsl.inha.ac.kr (Kobiljon Toshnazarov)\n\nThank you =)", "About SNMP KERI v1.3 Application", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void openLastEventLogFileToolStripMenuItem_Click(object sender, EventArgs e)
