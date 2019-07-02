@@ -17,6 +17,8 @@ namespace SNMP_KERI
 
         public MainForm()
         {
+            Thread.CurrentThread.Name = "GUI thread";
+
             DateTime nowTimestamp = DateTime.Now;
             DateTime now = new DateTime(year: nowTimestamp.Year, month: nowTimestamp.Month, day: nowTimestamp.Day, hour: nowTimestamp.Hour, minute: 0, second: 0);
 
@@ -26,30 +28,35 @@ namespace SNMP_KERI
 
             InitializeComponent();
 
-            vis = new TopologyVisualizer(
-                topologyPictureBox: topologyPictureBox,
-                showDetailsDelegate: (TopologyVisualizer.TopologyNode node) =>
+            vis = new TopologyVisualizer(topologyPictureBox: topologyPictureBox,
+                nodeNonLeftMouseDownDelegate: (node, e) =>
                 {
-                    hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                    hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
-                    hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
-                    hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
-                    hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
-                    hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
+                    if (e.Button == MouseButtons.Right)
+                    {
+                        hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
+                        hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                        hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
+                        hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
+                        hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
+                        hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
 
-                    // Change the location so that the Node-Details panel would become visible
-                    Point mouseLoc = PointToClient(Cursor.Position);
-                    if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
-                        mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
-                    if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
-                        mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
-                    hoverPanel.Location = mouseLoc;
-                    hoverPanel.Visible = true;
+                        // Change the location so that the Node-Details panel would become visible
+                        Point mouseLoc = PointToClient(Cursor.Position);
+                        if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
+                            mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
+                        if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
+                            mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
+                        hoverPanel.Location = mouseLoc;
+                        hoverPanel.Visible = true;
+                    }
                 },
-                hideDetailsDelegate: () =>
+                nodeNonLeftMouseUpDelegate: (e) =>
                 {
-                    hoverPanel.Visible = false;
-                    topologyPictureBox.Refresh();
+                    if (e.Button == MouseButtons.Right)
+                    {
+                        hoverPanel.Visible = false;
+                        topologyPictureBox.Refresh();
+                    }
                 }
             );
             Tools.init(vis);
@@ -65,29 +72,37 @@ namespace SNMP_KERI
             form.ShowDialog(this);
             if (form.resConfigUrl != null)
             {
-                vis = new TopologyVisualizer(topologyPictureBox: topologyPictureBox, showDetailsDelegate: (TopologyVisualizer.TopologyNode node) =>
-                {
-                    hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                    hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
-                    hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
-                    hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
-                    hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
-                    hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
-
-                    // Change the location so that the Node-Details panel would become visible
-                    Point mouseLoc = PointToClient(Cursor.Position);
-                    if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
-                        mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
-                    if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
-                        mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
-                    hoverPanel.Location = mouseLoc;
-                    hoverPanel.Visible = true;
-                },
-                    hideDetailsDelegate: () =>
+                vis = new TopologyVisualizer(topologyPictureBox: topologyPictureBox,
+                    nodeNonLeftMouseDownDelegate: (node, evt) =>
                     {
-                        hoverPanel.Visible = false;
-                        topologyPictureBox.Refresh();
-                    });
+                        if (evt.Button == MouseButtons.Right)
+                        {
+                            hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
+                            hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                            hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
+                            hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
+                            hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
+                            hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
+
+                            // Change the location so that the Node-Details panel would become visible
+                            Point mouseLoc = PointToClient(Cursor.Position);
+                            if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
+                                mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
+                            if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
+                                mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
+                            hoverPanel.Location = mouseLoc;
+                            hoverPanel.Visible = true;
+                        }
+                    },
+                    nodeNonLeftMouseUpDelegate: (evt) =>
+                    {
+                        if (evt.Button == MouseButtons.Right)
+                        {
+                            hoverPanel.Visible = false;
+                            topologyPictureBox.Refresh();
+                        }
+                    }
+                );
                 vis.importNodeXmls(form.resConfigUrl);
                 vis.redrawTopology();
                 Tools.init(vis);
@@ -106,57 +121,73 @@ namespace SNMP_KERI
             {
                 try
                 {
-                    vis = new TopologyVisualizer(topologyPictureBox: topologyPictureBox, showDetailsDelegate: (TopologyVisualizer.TopologyNode node) =>
-                    {
-                        hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                        hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
-                        hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
-                        hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
-                        hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
-                        hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
-
-                        // Change the location so that the Node-Details panel would become visible
-                        Point mouseLoc = PointToClient(Cursor.Position);
-                        if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
-                            mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
-                        if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
-                            mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
-                        hoverPanel.Location = mouseLoc;
-                        hoverPanel.Visible = true;
-                    },
-                        hideDetailsDelegate: () =>
+                    vis = new TopologyVisualizer(topologyPictureBox: topologyPictureBox,
+                        nodeNonLeftMouseDownDelegate: (node, evt) =>
                         {
-                            hoverPanel.Visible = false;
-                            topologyPictureBox.Refresh();
-                        });
+                            if (evt.Button == MouseButtons.Right)
+                            {
+                                hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
+                                hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                                hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
+                                hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
+                                hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
+                                hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
+
+                                // Change the location so that the Node-Details panel would become visible
+                                Point mouseLoc = PointToClient(Cursor.Position);
+                                if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
+                                    mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
+                                if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
+                                    mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
+                                hoverPanel.Location = mouseLoc;
+                                hoverPanel.Visible = true;
+                            }
+                        },
+                        nodeNonLeftMouseUpDelegate: (evt) =>
+                        {
+                            if (evt.Button == MouseButtons.Right)
+                            {
+                                hoverPanel.Visible = false;
+                                topologyPictureBox.Refresh();
+                            }
+                        }
+                    );
                     vis.importNodeXmls(dialog.FileName);
                     vis.redrawTopology();
                 }
                 catch (Exception ex)
                 {
-                    vis = new TopologyVisualizer(topologyPictureBox: topologyPictureBox, showDetailsDelegate: (TopologyVisualizer.TopologyNode node) =>
-                    {
-                        hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                        hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
-                        hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
-                        hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
-                        hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
-                        hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
-
-                        // Change the location so that the Node-Details panel would become visible
-                        Point mouseLoc = PointToClient(Cursor.Position);
-                        if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
-                            mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
-                        if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
-                            mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
-                        hoverPanel.Location = mouseLoc;
-                        hoverPanel.Visible = true;
-                    },
-                        hideDetailsDelegate: () =>
+                    vis = new TopologyVisualizer(topologyPictureBox: topologyPictureBox,
+                        nodeNonLeftMouseDownDelegate: (node, evt) =>
                         {
-                            hoverPanel.Visible = false;
-                            topologyPictureBox.Refresh();
-                        });
+                            if (evt.Button == MouseButtons.Right)
+                            {
+                                hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
+                                hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                                hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
+                                hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
+                                hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
+                                hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
+
+                                // Change the location so that the Node-Details panel would become visible
+                                Point mouseLoc = PointToClient(Cursor.Position);
+                                if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
+                                    mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
+                                if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
+                                    mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
+                                hoverPanel.Location = mouseLoc;
+                                hoverPanel.Visible = true;
+                            }
+                        },
+                        nodeNonLeftMouseUpDelegate: (evt) =>
+                        {
+                            if (evt.Button == MouseButtons.Right)
+                            {
+                                hoverPanel.Visible = false;
+                                topologyPictureBox.Refresh();
+                            }
+                        }
+                    );
                     MessageBox.Show(this, "Bad configuration file has been picked, please try again!", "Bad file", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
@@ -244,29 +275,37 @@ namespace SNMP_KERI
                 form.ShowDialog(this);
                 if (form.resConfigUrl != null)
                 {
-                    vis = new TopologyVisualizer(topologyPictureBox: topologyPictureBox, showDetailsDelegate: (TopologyVisualizer.TopologyNode node) =>
-                    {
-                        hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                        hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
-                        hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
-                        hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
-                        hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
-                        hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
-
-                        // Change the location so that the Node-Details panel would become visible
-                        Point mouseLoc = PointToClient(Cursor.Position);
-                        if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
-                            mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
-                        if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
-                            mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
-                        hoverPanel.Location = mouseLoc;
-                        hoverPanel.Visible = true;
-                    },
-                        hideDetailsDelegate: () =>
+                    vis = new TopologyVisualizer(topologyPictureBox: topologyPictureBox,
+                        nodeNonLeftMouseDownDelegate: (node, evt) =>
                         {
-                            hoverPanel.Visible = false;
-                            topologyPictureBox.Refresh();
-                        });
+                            if (evt.Button == MouseButtons.Right)
+                            {
+                                hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
+                                hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                                hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
+                                hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
+                                hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
+                                hoverLabelMib.ForeColor = ((SolidBrush)node?.mibBrush).Color;
+
+                                // Change the location so that the Node-Details panel would become visible
+                                Point mouseLoc = PointToClient(Cursor.Position);
+                                if (mouseLoc.X + hoverPanel.Width > topologyPictureBox.Location.X + topologyPictureBox.Width)
+                                    mouseLoc.X = topologyPictureBox.Location.X + topologyPictureBox.Width - hoverPanel.Width;
+                                if (mouseLoc.Y + hoverPanel.Height > topologyPictureBox.Location.Y + topologyPictureBox.Height)
+                                    mouseLoc.Y = topologyPictureBox.Location.Y + topologyPictureBox.Height - hoverPanel.Height;
+                                hoverPanel.Location = mouseLoc;
+                                hoverPanel.Visible = true;
+                            }
+                        },
+                        nodeNonLeftMouseUpDelegate: (evt) =>
+                        {
+                            if (evt.Button == MouseButtons.Right)
+                            {
+                                hoverPanel.Visible = false;
+                                topologyPictureBox.Refresh();
+                            }
+                        }
+                    );
                     vis.importNodeXmls(dialog.FileName);
                     vis.redrawTopology();
                     vis.importNodeXmls(form.resConfigUrl);
@@ -278,7 +317,7 @@ namespace SNMP_KERI
                 }
             }
             else
-                MessageBox.Show(this, "Load operation has been canceled!", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, "Edit operation has been canceled!", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void toggleLogButton_Click(object sender, EventArgs e)

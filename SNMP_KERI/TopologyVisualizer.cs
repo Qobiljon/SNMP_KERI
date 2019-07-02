@@ -32,8 +32,8 @@ namespace SNMP_KERI
         #endregion
 
         #region Variables
-        PictureBox canvasPictureBox;
-        Graphics canvas;
+        internal PictureBox canvasPictureBox;
+        internal Graphics canvas;
         private Font font;
         private TextBox logTextBox;
 
@@ -60,11 +60,11 @@ namespace SNMP_KERI
         private Size pBoxSize;
         private short logLinesCount;
 
-        private ShowDetailsDelegate showDetailsDelegate;
-        private HideDetailsDelegate hideDetailsDelegate;
+        private NodeNonLeftMouseDownDelegate nodeNonLeftMouseDownDelegate;
+        private NodeNonLeftMouseUpDelegate nodeNonLeftMouseUpDelegate;
         #endregion
 
-        internal TopologyVisualizer(PictureBox topologyPictureBox, TextBox logTextBox = null, ShowDetailsDelegate showDetailsDelegate = null, HideDetailsDelegate hideDetailsDelegate = null)
+        internal TopologyVisualizer(PictureBox topologyPictureBox, TextBox logTextBox = null, NodeNonLeftMouseDownDelegate nodeNonLeftMouseDownDelegate = null, NodeNonLeftMouseUpDelegate nodeNonLeftMouseUpDelegate = null)
         {
             this.translateNode = false;
             this.clickAction = TpClickAction.MOVE_LOCATION;
@@ -84,8 +84,8 @@ namespace SNMP_KERI
 
             topologyPictureBox.InitialImage = null;
             this.logTextBox = logTextBox;
-            this.showDetailsDelegate = showDetailsDelegate;
-            this.hideDetailsDelegate = hideDetailsDelegate;
+            this.nodeNonLeftMouseDownDelegate = nodeNonLeftMouseDownDelegate;
+            this.nodeNonLeftMouseUpDelegate = nodeNonLeftMouseUpDelegate;
 
             clickAction = TpClickAction.NONE;
 
@@ -123,7 +123,16 @@ namespace SNMP_KERI
             canvas.DrawRectangle(Pens.Black, node.portC.startLoc.x, node.portC.startLoc.y, pBoxW, pBoxH);
             canvas.FillRectangle(node.portC.brush, node.portC.startLoc.x + 1, node.portC.startLoc.y + 1, pBoxW - 1, pBoxH - 1);
             TopologyLoc center = node.portC.getCenter();
-            canvas.DrawString("C", font, Brushes.White, center.x - 6, center.y - 5);
+            string cPortNaming = "C";
+            Font cPortFont = font;
+            if (node.type == TopologyNode.TpNodeType.REDBOXP || node.type == TopologyNode.TpNodeType.REDBOXH)
+                cPortNaming = "IL";
+            else if (node.type == TopologyNode.TpNodeType.DANP || node.type == TopologyNode.TpNodeType.DANH || node.type == TopologyNode.TpNodeType.VDANP || node.type == TopologyNode.TpNodeType.VDANH)
+            {
+                cPortFont = new Font(font.FontFamily, (int)(font.Size * 0.7));
+                cPortNaming = "APP";
+            }
+            canvas.DrawString(cPortNaming, cPortFont, Brushes.White, center.x - 8, center.y - 5);
 
             // Right port - B
             canvas.DrawRectangle(Pens.Black, node.portB.startLoc.x, node.portB.startLoc.y, pBoxW, pBoxH);
@@ -319,135 +328,136 @@ namespace SNMP_KERI
         #region Node-Click event handlers
         private void nodeMouseDownHandler(object sender, MouseEventArgs e)
         {
-            if (e.Button != MouseButtons.Left)
+            if (e.Button == MouseButtons.Left)
             {
-                if (activePort != null)
-                {
-                    activePort.brush = Brushes.Green;
-                    clearPortConnections(activePort);
-                }
+                foreach (TopologyNode _node in nodes.Values)
+                    if (_node.isInLocation(e.X, e.Y))
+                    {
+                        switch (clickAction)
+                        {
+                            case TpClickAction.MOVE_LOCATION:
+                                this.activeNode = _node;
+                                this.translateNode = true;
+                                this.origNodePosX = _node.startLoc.x;
+                                this.origNodePosY = _node.startLoc.y;
+                                this.mouseLocDiffX = (short)(e.X - _node.startLoc.x);
+                                this.mouseLocDiffY = (short)(e.Y - _node.startLoc.y);
+                                break;
+                            case TpClickAction.SET_CONNECTIONS:
+                                {
+                                    TopologyPort port = getPortAt(_node, e.X, e.Y);
+                                    if (port == null)
+                                        break;
+                                    else if (activePort != null)
+                                        if (port == activePort)
+                                            break;
+                                        else if (port.parent == activePort.parent)
+                                        {
+                                            port.brush = Brushes.DarkOrange;
+                                            activePort.brush = Brushes.Green;
 
-                this.activeNode = null;
-                this.activePort = null;
-                this.translateNode = false;
+                                            activePort = port;
+                                            redrawTopology();
+                                            break;
+                                        }
+
+                                    if (activePort == null)
+                                    {
+                                        activePort = port;
+                                        activePort.brush = Brushes.DarkOrange;
+                                    }
+                                    else
+                                    {
+                                        port.brush = Brushes.Green;
+                                        activePort.brush = Brushes.Green;
+
+                                        clearPortConnections(port, activePort);
+                                        attachPorts(port, activePort);
+                                        redrawTopology();
+
+                                        activePort = null;
+                                    }
+                                }
+                                break;
+                            case TpClickAction.SET_NODE_TYPE:
+                                this.activeNode = _node;
+                                break;
+                            case TpClickAction.SET_NODE_IP:
+                                this.activeNode = _node;
+                                break;
+                            case TpClickAction.SET_NODE_MAC:
+                                this.activeNode = _node;
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    }
+            }
+            else
+            {
+                if (e.Button == MouseButtons.Right)
+                {
+                    if (activePort != null)
+                    {
+                        activePort.brush = Brushes.Green;
+                        clearPortConnections(activePort);
+                    }
+
+                    this.activeNode = null;
+                    this.activePort = null;
+                    this.translateNode = false;
+                    //log(value: "actions canceled (action: mouse right click)");
+                }
 
                 // In case user tried to see node details
-                if (e.Button == MouseButtons.Right || showDetailsDelegate != null)
-                {
-                    foreach (TopologyNode _node in nodes.Values)
-                        if (_node.isInLocation(e.X, e.Y))
-                        {
-                            showDetailsDelegate?.Invoke(_node);
-                            return;
-                        }
-                    return;
-                }
-
-                //log(value: "actions canceled (action: mouse right click)");
-                return;
-            }
-
-            TopologyNode node = null;
-            foreach (TopologyNode _node in nodes.Values)
-                if (_node.isInLocation(e.X, e.Y))
-                {
-                    node = _node;
-                    break;
-                }
-
-            if (node != null)
-            {
-                switch (clickAction)
-                {
-                    case TpClickAction.MOVE_LOCATION:
-                        this.activeNode = node;
-                        this.translateNode = true;
-                        this.origNodePosX = node.startLoc.x;
-                        this.origNodePosY = node.startLoc.y;
-                        this.mouseLocDiffX = (short)(e.X - node.startLoc.x);
-                        this.mouseLocDiffY = (short)(e.Y - node.startLoc.y);
+                foreach (TopologyNode _node in nodes.Values)
+                    if (_node.isInLocation(e.X, e.Y))
+                    {
+                        nodeNonLeftMouseDownDelegate?.Invoke(_node, e);
                         break;
-                    case TpClickAction.SET_CONNECTIONS:
-                        {
-                            TopologyPort port = getPortAt(node, e.X, e.Y);
-                            if (port == null)
-                                break;
-                            else if (activePort != null)
-                                if (port == activePort)
-                                    break;
-                                else if (port.parent == activePort.parent)
-                                {
-                                    port.brush = Brushes.DarkOrange;
-                                    activePort.brush = Brushes.Green;
-
-                                    activePort = port;
-                                    redrawTopology();
-                                    break;
-                                }
-
-                            if (activePort == null)
-                            {
-                                activePort = port;
-                                activePort.brush = Brushes.DarkOrange;
-                            }
-                            else
-                            {
-                                port.brush = Brushes.Green;
-                                activePort.brush = Brushes.Green;
-
-                                clearPortConnections(port, activePort);
-                                attachPorts(port, activePort);
-                                redrawTopology();
-
-                                activePort = null;
-                            }
-                        }
-                        break;
-                    case TpClickAction.SET_NODE_TYPE:
-                        this.activeNode = node;
-                        break;
-                    case TpClickAction.SET_NODE_IP:
-                        this.activeNode = node;
-                        break;
-                    case TpClickAction.SET_NODE_MAC:
-                        this.activeNode = node;
-                        break;
-                    default:
-                        break;
-                }
+                    }
             }
         }
 
         private void nodeMouseUpHandler(object sender, MouseEventArgs e)
         {
-            hideDetailsDelegate?.Invoke();
-
-            switch (clickAction)
+            if (e.Button == MouseButtons.Left)
             {
-                case TpClickAction.MOVE_LOCATION:
-                    if (e.Button == MouseButtons.Left)
-                        this.translateNode = false;
-                    this.activeNode = null;
-                    break;
-                case TpClickAction.SET_CONNECTIONS:
-                    nodeClickHandler(activeNode);
-                    break;
-                case TpClickAction.SET_NODE_TYPE:
-                    nodeClickHandler(activeNode);
-                    this.activeNode = null;
-                    break;
-                case TpClickAction.SET_NODE_IP:
-                    nodeClickHandler(activeNode);
-                    this.activeNode = null;
-                    break;
-                case TpClickAction.SET_NODE_MAC:
-                    nodeClickHandler(activeNode);
-                    this.activeNode = null;
-                    break;
-                default:
-                    break;
+                if (activeNode != null)
+                    if (activeNode.isInLocation(e.Location.X, e.Location.Y))
+                        switch (clickAction)
+                        {
+                            case TpClickAction.MOVE_LOCATION:
+                                if (e.Button == MouseButtons.Left)
+                                    this.translateNode = false;
+                                this.activeNode = null;
+                                break;
+                            case TpClickAction.SET_CONNECTIONS:
+                                nodeLeftClickHandler(activeNode);
+                                break;
+                            case TpClickAction.SET_NODE_TYPE:
+                                nodeLeftClickHandler(activeNode);
+                                this.activeNode = null;
+                                break;
+                            case TpClickAction.SET_NODE_IP:
+                                nodeLeftClickHandler(activeNode);
+                                this.activeNode = null;
+                                break;
+                            case TpClickAction.SET_NODE_MAC:
+                                nodeLeftClickHandler(activeNode);
+                                this.activeNode = null;
+                                break;
+                            default:
+                                break;
+                        }
+                    else
+                        activeNode = null;
             }
-
+            else
+            {
+                nodeNonLeftMouseUpDelegate?.Invoke(e);
+            }
             redrawTopology();
         }
 
@@ -465,7 +475,7 @@ namespace SNMP_KERI
                 }
         }
 
-        private void nodeClickHandler(TopologyNode node)
+        private void nodeLeftClickHandler(TopologyNode node)
         {
             if (node == null)
                 return;
@@ -629,6 +639,14 @@ namespace SNMP_KERI
             internal short id; // incremental number
             internal TopologyLoc startLoc; // start-location
             internal TopologyLoc endLoc; // end-location
+            internal TopologyLoc Center
+            {
+                get => new TopologyLoc()
+                {
+                    x = (short)(startLoc.x + (endLoc.x - startLoc.x) / 2),
+                    y = (short)(startLoc.y + (endLoc.y - startLoc.y) / 2)
+                };
+            }
             internal short topMargin; // node<->title margin
 
             internal TopologyPort portC;
@@ -721,18 +739,174 @@ namespace SNMP_KERI
                 }
             }
 
+            internal void rotate()
+            {
+                // rotate PORT_A (left port)
+                if (portA.startLoc.x == startLoc.x)
+                {
+                    if (portA.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |██    |      |    ██|
+                        //  |      |  ->  |      |
+                        //  |      |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: (short)(endLoc.x - portA.Width),
+                            y: short.MinValue
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |██    |
+                        //  |      |  ->  |      |
+                        //  |██    |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: startLoc.y
+                        ));
+                    }
+                }
+                else
+                {
+                    if (portA.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |    ██|      |      |
+                        //  |      |  ->  |      |
+                        //  |      |      |    ██|
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: (short)(endLoc.y - portA.Height)
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |      |
+                        //  |      |  ->  |      |
+                        //  |    ██|      |██    |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portA.translateToLoc(new TopologyLoc(
+                            x: startLoc.x,
+                            y: short.MinValue
+                        ));
+                    }
+                }
+
+                // rotate PORT_B (right port)
+                if (portB.startLoc.x == startLoc.x)
+                {
+                    if (portB.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |██    |      |    ██|
+                        //  |      |  ->  |      |
+                        //  |      |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: (short)(endLoc.x - portB.Width),
+                            y: short.MinValue
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |██    |
+                        //  |      |  ->  |      |
+                        //  |██    |      |      |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: startLoc.y
+                        ));
+                    }
+                }
+                else
+                {
+                    if (portB.startLoc.y == startLoc.y)
+                    {
+                        //   ______        ______
+                        //  |    ██|      |      |
+                        //  |      |  ->  |      |
+                        //  |      |      |    ██|
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: short.MinValue,
+                            y: (short)(endLoc.y - portB.Height)
+                        ));
+                    }
+                    else
+                    {
+                        //   ______        ______
+                        //  |      |      |      |
+                        //  |      |  ->  |      |
+                        //  |    ██|      |██    |
+                        //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                        portB.translateToLoc(new TopologyLoc(
+                            x: startLoc.x,
+                            y: short.MinValue
+                        ));
+                    }
+                }
+
+                // rotate PORT_C (top port)
+                if (portC.startLoc.x == startLoc.x)
+                {
+                    //   ______        ______
+                    //  |      |      |  ██  |
+                    //  |██    |  ->  |      |
+                    //  |      |      |      |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                    portC.translateToLoc(new TopologyLoc(
+                        x: (short)(startLoc.x + portC.Width),
+                        y: startLoc.y
+                    ));
+                }
+                else if (portC.startLoc.y == startLoc.y)
+                {
+                    //   ______        ______
+                    //  |  ██  |      |      |
+                    //  |      |  ->  |    ██|
+                    //  |      |      |      |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                    portC.translateToLoc(new TopologyLoc(
+                        x: (short)(endLoc.x - portC.Width),
+                        y: (short)(startLoc.y + portC.Height)
+                    ));
+                }
+                else if (portC.endLoc.x == endLoc.x)
+                {
+                    //   ______        ______
+                    //  |      |      |      |
+                    //  |    ██|  ->  |      |
+                    //  |      |      |  ██  |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                    portC.translateToLoc(new TopologyLoc(
+                        x: (short)(startLoc.x + portC.Width),
+                        y: (short)(endLoc.y - portC.Height)
+                    ));
+                }
+                else if (portC.endLoc.y == endLoc.y)
+                {
+                    //   ______        ______
+                    //  |      |      |      |
+                    //  |      |  ->  |██    |
+                    //  |  ██  |      |      |
+                    //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
+                    portC.translateToLoc(new TopologyLoc(
+                        x: startLoc.x,
+                        y: (short)(startLoc.y + portC.Height)
+                    ));
+                }
+            }
+
             internal bool isInLocation(int x, int y)
             {
                 return (startLoc.x <= x & x <= endLoc.x) && (startLoc.y <= y & y <= endLoc.y);
-            }
-
-            internal TopologyLoc getCenter()
-            {
-                return new TopologyLoc
-                {
-                    x = (short)(startLoc.x + (endLoc.x - startLoc.x) / 2),
-                    y = (short)(startLoc.y + (endLoc.y - startLoc.y) / 2)
-                };
             }
 
             public XElement toXmlElement(string descr = "")
@@ -829,6 +1003,8 @@ namespace SNMP_KERI
             internal short connPortId;
             internal TpPortType connPortType;
             internal bool connLinkDrawn;
+            public short Width { get => (short)(endLoc.x - startLoc.x); }
+            public short Height { get => (short)(endLoc.y - startLoc.y); }
             #endregion
 
             internal TopologyPort(TpPortType type, TopologyLoc startLoc, TopologyLoc endLoc, TopologyNode parent, Brush brush = null)
@@ -854,6 +1030,21 @@ namespace SNMP_KERI
                     x = (short)(startLoc.x + (endLoc.x - startLoc.x) / 2),
                     y = (short)(startLoc.y + (endLoc.y - startLoc.y) / 2)
                 };
+            }
+
+            internal void translateToLoc(TopologyLoc toLoc)
+            {
+                if (toLoc.x != short.MinValue)
+                {
+                    endLoc.x = (short)(toLoc.x + Width);
+                    startLoc.x = toLoc.x;
+                }
+
+                if (toLoc.y != short.MinValue)
+                {
+                    endLoc.y = (short)(toLoc.y + Height);
+                    startLoc.y = toLoc.y;
+                }
             }
 
             public XElement toXmlElement(string descr = "")
@@ -985,8 +1176,8 @@ namespace SNMP_KERI
             }
         }
 
-        internal delegate void HideDetailsDelegate();
+        internal delegate void NodeNonLeftMouseUpDelegate(MouseEventArgs e);
 
-        internal delegate void ShowDetailsDelegate(TopologyNode node);
+        internal delegate void NodeNonLeftMouseDownDelegate(TopologyNode node, MouseEventArgs e);
     }
 }

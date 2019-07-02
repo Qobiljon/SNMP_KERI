@@ -27,7 +27,13 @@ namespace SNMP_KERI
 
         internal void loadExistingConfig(string fileName)
         {
-            vis = new TopologyVisualizer(topologyPictureBox, logTextBox);
+            vis = new TopologyVisualizer(topologyPictureBox, logTextBox,
+                nodeNonLeftMouseDownDelegate: (node, e) =>
+                {
+                    if (e.Button == MouseButtons.Middle)
+                        node?.rotate();
+                }
+            );
             vis.importNodeXmls(fileName);
             log(key: "config", value: string.Format("xml config file loaded (source: {0})", fileName));
         }
@@ -197,6 +203,7 @@ namespace SNMP_KERI
                 Thread.Sleep(100);
                 vis?.redrawTopology();
             });
+            redrawThread.Name = "Topology redraw thread";
             redrawThread.Start();
 
             translationButton.PerformClick();

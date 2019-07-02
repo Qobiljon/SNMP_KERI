@@ -59,12 +59,12 @@
             this.hoverLabelMacAddress = new System.Windows.Forms.Label();
             this.hoverLabelIpAddress = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
+            this.warningsCheckBox = new System.Windows.Forms.CheckBox();
+            this.errorsCheckBox = new System.Windows.Forms.CheckBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.topologyPictureBox = new System.Windows.Forms.PictureBox();
             this.logTextBox = new System.Windows.Forms.RichTextBox();
-            this.errorsCheckBox = new System.Windows.Forms.CheckBox();
-            this.warningsCheckBox = new System.Windows.Forms.CheckBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.logWindowContextMenuStrip.SuspendLayout();
             this.hoverPanel.SuspendLayout();
@@ -331,6 +331,45 @@
             this.panel1.Size = new System.Drawing.Size(1457, 35);
             this.panel1.TabIndex = 19;
             // 
+            // label1
+            // 
+            this.label1.Dock = System.Windows.Forms.DockStyle.Right;
+            this.label1.Font = new System.Drawing.Font("Gulim", 12F);
+            this.label1.Location = new System.Drawing.Point(1124, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(152, 35);
+            this.label1.TabIndex = 4;
+            this.label1.Text = "LOGS FILTER:";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // warningsCheckBox
+            // 
+            this.warningsCheckBox.AutoSize = true;
+            this.warningsCheckBox.Checked = true;
+            this.warningsCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.warningsCheckBox.Dock = System.Windows.Forms.DockStyle.Right;
+            this.warningsCheckBox.Location = new System.Drawing.Point(1276, 0);
+            this.warningsCheckBox.Name = "warningsCheckBox";
+            this.warningsCheckBox.Padding = new System.Windows.Forms.Padding(5);
+            this.warningsCheckBox.Size = new System.Drawing.Size(98, 35);
+            this.warningsCheckBox.TabIndex = 3;
+            this.warningsCheckBox.Text = "WARNINGS";
+            this.warningsCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // errorsCheckBox
+            // 
+            this.errorsCheckBox.AutoSize = true;
+            this.errorsCheckBox.Checked = true;
+            this.errorsCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.errorsCheckBox.Dock = System.Windows.Forms.DockStyle.Right;
+            this.errorsCheckBox.Location = new System.Drawing.Point(1374, 0);
+            this.errorsCheckBox.Name = "errorsCheckBox";
+            this.errorsCheckBox.Padding = new System.Windows.Forms.Padding(5);
+            this.errorsCheckBox.Size = new System.Drawing.Size(83, 35);
+            this.errorsCheckBox.TabIndex = 1;
+            this.errorsCheckBox.Text = "ERRORS";
+            this.errorsCheckBox.UseVisualStyleBackColor = true;
+            // 
             // splitContainer1
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -375,45 +414,6 @@
             this.logTextBox.TabIndex = 15;
             this.logTextBox.Text = "";
             // 
-            // errorsCheckBox
-            // 
-            this.errorsCheckBox.AutoSize = true;
-            this.errorsCheckBox.Checked = true;
-            this.errorsCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.errorsCheckBox.Dock = System.Windows.Forms.DockStyle.Right;
-            this.errorsCheckBox.Location = new System.Drawing.Point(1374, 0);
-            this.errorsCheckBox.Name = "errorsCheckBox";
-            this.errorsCheckBox.Padding = new System.Windows.Forms.Padding(5);
-            this.errorsCheckBox.Size = new System.Drawing.Size(83, 35);
-            this.errorsCheckBox.TabIndex = 1;
-            this.errorsCheckBox.Text = "ERRORS";
-            this.errorsCheckBox.UseVisualStyleBackColor = true;
-            // 
-            // warningsCheckBox
-            // 
-            this.warningsCheckBox.AutoSize = true;
-            this.warningsCheckBox.Checked = true;
-            this.warningsCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.warningsCheckBox.Dock = System.Windows.Forms.DockStyle.Right;
-            this.warningsCheckBox.Location = new System.Drawing.Point(1276, 0);
-            this.warningsCheckBox.Name = "warningsCheckBox";
-            this.warningsCheckBox.Padding = new System.Windows.Forms.Padding(5);
-            this.warningsCheckBox.Size = new System.Drawing.Size(98, 35);
-            this.warningsCheckBox.TabIndex = 3;
-            this.warningsCheckBox.Text = "WARNINGS";
-            this.warningsCheckBox.UseVisualStyleBackColor = true;
-            // 
-            // label1
-            // 
-            this.label1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.label1.Font = new System.Drawing.Font("Gulim", 12F);
-            this.label1.Location = new System.Drawing.Point(1124, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(152, 35);
-            this.label1.TabIndex = 4;
-            this.label1.Text = "LOGS FILTER:";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
@@ -427,7 +427,7 @@
             this.Location = new System.Drawing.Point(10, 10);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "MainForm";
-            this.Text = "KERI";
+            this.Text = "SNMP KERI";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.logWindowContextMenuStrip.ResumeLayout(false);

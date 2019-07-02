@@ -62,6 +62,7 @@ namespace SNMP_KERI
             if (masterThread == null || masterThread.ThreadState.HasFlag(ThreadState.Aborted))
             {
                 masterThread = new Thread((thrStartAction) => runMasterThreadLifecycleAsync(vis, (ThreadStart)thrStartAction));
+                masterThread.Name = "SNMP lifecycle (master) thread";
                 masterThread.IsBackground = true;
 
                 logDeleg(message: "Starting SNMP service");
@@ -75,10 +76,12 @@ namespace SNMP_KERI
             masterThread = null;
 
             foreach (Thread thread in channels.Values)
-                if (thread != null && thread.IsAlive)
+                if (thread != null)
                     thread?.Abort();
             channels.Clear();
 
+            snmpDataWriter.Flush();
+            snmpDataWriter.Close();
             eventLogsWriter.Flush();
             eventLogsWriter.Close();
 
@@ -308,6 +311,7 @@ namespace SNMP_KERI
                             }
                         }
                     });
+                    channels[node.ipAddress].Name = $"Thread for handling user: {node.ipAddress.ToString()}";
                     channels[node.ipAddress].IsBackground = true;
                     channels[node.ipAddress].Start();
                 }
