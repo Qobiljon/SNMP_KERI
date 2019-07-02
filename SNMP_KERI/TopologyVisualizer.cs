@@ -119,17 +119,23 @@ namespace SNMP_KERI
             canvas.DrawRectangle(Pens.Black, node.startLoc.x, node.startLoc.y, NODE_WIDTH, NODE_HEIGHT);
             canvas.FillRectangle(node.brush, node.startLoc.x + 1, node.startLoc.y + 1, NODE_WIDTH - 1, NODE_HEIGHT - 1);
 
-            // Top port
+            // Top port - C
             canvas.DrawRectangle(Pens.Black, node.portC.startLoc.x, node.portC.startLoc.y, pBoxW, pBoxH);
             canvas.FillRectangle(node.portC.brush, node.portC.startLoc.x + 1, node.portC.startLoc.y + 1, pBoxW - 1, pBoxH - 1);
+            TopologyLoc center = node.portC.getCenter();
+            canvas.DrawString("C", font, Brushes.White, center.x - 6, center.y - 5);
 
-            // Right port
+            // Right port - B
             canvas.DrawRectangle(Pens.Black, node.portB.startLoc.x, node.portB.startLoc.y, pBoxW, pBoxH);
             canvas.FillRectangle(node.portB.brush, node.portB.startLoc.x + 1, node.portB.startLoc.y + 1, pBoxW - 1, pBoxH - 1);
+            center = node.portB.getCenter();
+            canvas.DrawString("B", font, Brushes.White, center.x - 6, center.y - 5);
 
-            // Left port
+            // Left port - A
             canvas.DrawRectangle(Pens.Black, node.portA.startLoc.x, node.portA.startLoc.y, pBoxW, pBoxH);
             canvas.FillRectangle(node.portA.brush, node.portA.startLoc.x + 1, node.portA.startLoc.y + 1, pBoxW - 1, pBoxH - 1);
+            center = node.portA.getCenter();
+            canvas.DrawString("A", font, Brushes.White, center.x - 6, center.y - 5);
         }
 
         private void eraseNodeRect(TopologyNode node)
@@ -720,6 +726,15 @@ namespace SNMP_KERI
                 return (startLoc.x <= x & x <= endLoc.x) && (startLoc.y <= y & y <= endLoc.y);
             }
 
+            internal TopologyLoc getCenter()
+            {
+                return new TopologyLoc
+                {
+                    x = (short)(startLoc.x + (endLoc.x - startLoc.x) / 2),
+                    y = (short)(startLoc.y + (endLoc.y - startLoc.y) / 2)
+                };
+            }
+
             public XElement toXmlElement(string descr = "")
             {
                 XElement res = new XElement("TpNode", new XAttribute("descr", descr));
@@ -830,6 +845,15 @@ namespace SNMP_KERI
             internal bool isInLocation(int x, int y)
             {
                 return (startLoc.x <= x & x <= endLoc.x) && (startLoc.y <= y & y <= endLoc.y);
+            }
+
+            internal TopologyLoc getCenter()
+            {
+                return new TopologyLoc
+                {
+                    x = (short)(startLoc.x + (endLoc.x - startLoc.x) / 2),
+                    y = (short)(startLoc.y + (endLoc.y - startLoc.y) / 2)
+                };
             }
 
             public XElement toXmlElement(string descr = "")

@@ -252,18 +252,25 @@ namespace SNMP_KERI
 
                                 #region Triggers: warnings and errors on portC
                                 if (lreCntRxC.Unchanged)
+                                {
+                                    string cPortNaming = "C";
+                                    if (node.type == TopologyVisualizer.TopologyNode.TpNodeType.REDBOXP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.REDBOXH)
+                                        cPortNaming = "IL";
+                                    else if (node.type == TopologyVisualizer.TopologyNode.TpNodeType.DANP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.DANH || node.type == TopologyVisualizer.TopologyNode.TpNodeType.VDANP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.VDANH)
+                                        cPortNaming = "APP";
                                     if (lreCntRxC.UnchangedCounter > 5)
                                     {
                                         node.portC.brush = Brushes.DarkRed;
-                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tC\tLreCntRxC\tNO INCREASE\tERROR");
+                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\t{cPortNaming}\tLreCntRxC\tNO INCREASE\tERROR");
                                         logDeleg(node.id, node.ipAddress, $"LreCntRxC={lreCntRxC.NewValue}, NO INCREASE {lreCntRxC.UnchangedCounter} TIMES", Color.Red);
                                     }
                                     else
                                     {
                                         node.portC.brush = Brushes.Orange;
-                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tC\tLreCntRxC\tNO INCREASE\tWARNING");
+                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\t{cPortNaming}\tLreCntRxC\tNO INCREASE\tWARNING");
                                         logDeleg(node.id, node.ipAddress, $"LreCntRxC={lreCntRxC.NewValue}, NO INCREASE {lreCntRxC.UnchangedCounter} TIMES", Color.DarkOrange);
                                     }
+                                }
                                 else
                                     node.portC.brush = Brushes.Green;
                                 #endregion
