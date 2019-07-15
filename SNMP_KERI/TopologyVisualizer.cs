@@ -683,11 +683,14 @@ namespace SNMP_KERI
             internal TopologyLoc endLoc; // end-location
             internal TopologyLoc Center
             {
-                get => new TopologyLoc()
+                get
                 {
-                    x = (short)(startLoc.x + (endLoc.x - startLoc.x) / 2),
-                    y = (short)(startLoc.y + (endLoc.y - startLoc.y) / 2)
-                };
+                    return new TopologyLoc()
+                    {
+                        x = (short)(startLoc.x + (endLoc.x - startLoc.x) / 2),
+                        y = (short)(startLoc.y + (endLoc.y - startLoc.y) / 2)
+                    };
+                }
             }
             internal short topMargin; // node<->title margin
 
@@ -1359,8 +1362,8 @@ namespace SNMP_KERI
             internal short connPortId;
             internal TpPortType connPortType;
             internal bool connLinkDrawn;
-            public short Width { get => (short)(endLoc.x - startLoc.x); }
-            public short Height { get => (short)(endLoc.y - startLoc.y); }
+            public short Width { get { return (short)(endLoc.x - startLoc.x); } }
+            public short Height { get { return (short)(endLoc.y - startLoc.y); } }
             #endregion
 
             internal TopologyPort(TpPortType type, TopologyLoc startLoc, TopologyLoc endLoc, TopologyNode parent, Brush brush = null)
