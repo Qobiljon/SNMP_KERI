@@ -25,11 +25,11 @@ namespace SNMP_KERI
             controlButtons = new Button[] { setMacAddrButton, translationButton, setIpAddrButton, setNodeTypeButton, setConnectionsButton };
         }
 
-        internal void loadExistingConfig(string fileName)
+        internal void LoadExistingConfig(string fileName)
         {
             vis = new TopologyVisualizer(topologyPictureBox, logTextBox);
-            vis.importNodeXmls(fileName);
-            log(key: "config", value: string.Format("xml config file loaded (source: {0})", fileName));
+            vis.ImportNodeXmls(fileName);
+            Log(key: "config", value: string.Format("xml config file loaded (source: {0})", fileName));
         }
 
         private void ConfigCreator_Load(object sender, EventArgs e)
@@ -67,7 +67,7 @@ namespace SNMP_KERI
             {
                 short posX = (short)((TopologyVisualizer.NODE_WIDTH + 2 * MARGIN) * c + MARGIN);
                 short posY = (short)((TopologyVisualizer.NODE_WIDTH + 2 * MARGIN) * r + MARGIN);
-                lastNode = editMode ? exisNodes[n] : vis.addNode(posX, posY);
+                lastNode = editMode ? exisNodes[n] : vis.AddNode(posX, posY);
 
                 if (c == numOfCols)
                 {
@@ -82,10 +82,10 @@ namespace SNMP_KERI
                 topologyPictureBox.Height = lastNode.endLoc.y + MARGIN;
 
             vis.clickAction = TopologyVisualizer.TpClickAction.MOVE_LOCATION;
-            log(key: "action", value: "altering node locations");
+            Log(key: "action", value: "altering node locations");
         }
 
-        private void saveButton_Click(object sender, EventArgs e)
+        private void SaveButton_Click(object sender, EventArgs e)
         {
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Title = "Pick the destination";
@@ -94,8 +94,8 @@ namespace SNMP_KERI
             {
                 if (!dialog.FileName.EndsWith(".xml"))
                     dialog.FileName += ".xml";
-                vis.exportNodeXmls(dialog.FileName, DateTime.UtcNow.Ticks.ToString());
-                log(key: "config file", value: string.Format("xml config file exported (destination: {0})", dialog.FileName));
+                vis.ExportNodeXmls(dialog.FileName, DateTime.UtcNow.Ticks.ToString());
+                Log(key: "config file", value: string.Format("xml config file exported (destination: {0})", dialog.FileName));
                 MessageBox.Show(this, string.Format("File has been successfully saved!\nFile: {0}", dialog.FileName), "Saved successfully", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 if (MessageBox.Show(this, "Do you want to load the saved configuration now ?", "Load as a configuration?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
@@ -109,7 +109,7 @@ namespace SNMP_KERI
                 MessageBox.Show(this, "File not saved!", "Operation Canceled", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
         }
 
-        private void setIpButton_Click(object sender, EventArgs e)
+        private void SetIpButton_Click(object sender, EventArgs e)
         {
             foreach (Button button in controlButtons)
                 if (button == sender)
@@ -117,11 +117,11 @@ namespace SNMP_KERI
                 else
                     button.BackColor = Color.FromName("Control");
             vis.clickAction = TopologyVisualizer.TpClickAction.SET_NODE_IP;
-            log(key: "action", value: "altering IP addresses (IP_ADDRESS) of nodes");
+            Log(key: "action", value: "altering IP addresses (IP_ADDRESS) of nodes");
             activeModeLabel.Text = string.Format("ACTION: {0}", "SET IP ADDRESS");
         }
 
-        private void setNodeTypeButton_Click(object sender, EventArgs e)
+        private void SetNodeTypeButton_Click(object sender, EventArgs e)
         {
             foreach (Button button in controlButtons)
                 if (button == sender)
@@ -129,11 +129,11 @@ namespace SNMP_KERI
                 else
                     button.BackColor = Color.FromName("Control");
             vis.clickAction = TopologyVisualizer.TpClickAction.SET_NODE_TYPE;
-            log(key: "action", value: "altering types of nodes");
+            Log(key: "action", value: "altering types of nodes");
             activeModeLabel.Text = string.Format("ACTION: {0}", "SET NODE TYPE");
         }
 
-        private void setMacAddrButton_Click(object sender, EventArgs e)
+        private void SetMacAddrButton_Click(object sender, EventArgs e)
         {
             foreach (Button button in controlButtons)
                 if (button == sender)
@@ -141,11 +141,11 @@ namespace SNMP_KERI
                 else
                     button.BackColor = Color.FromName("Control");
             vis.clickAction = TopologyVisualizer.TpClickAction.SET_NODE_MAC;
-            log(key: "action", value: "altering Hardware addresses (MAC_ADDRESS) of nodes");
+            Log(key: "action", value: "altering Hardware addresses (MAC_ADDRESS) of nodes");
             activeModeLabel.Text = string.Format("ACTION: {0}", "SET MAC ADDRESS");
         }
 
-        private void setConnectionsButton_Click(object sender, EventArgs e)
+        private void SetConnectionsButton_Click(object sender, EventArgs e)
         {
             foreach (Button button in controlButtons)
                 if (button == sender)
@@ -153,11 +153,11 @@ namespace SNMP_KERI
                 else
                     button.BackColor = Color.FromName("Control");
             vis.clickAction = TopologyVisualizer.TpClickAction.SET_CONNECTIONS;
-            log(key: "action", value: "altering connections between (ports of) nodes");
+            Log(key: "action", value: "altering connections between (ports of) nodes");
             activeModeLabel.Text = string.Format("ACTION: {0}", "SET PORT CONN.");
         }
 
-        private void translationButton_Click(object sender, EventArgs e)
+        private void TranslationButton_Click(object sender, EventArgs e)
         {
             foreach (Button button in controlButtons)
                 if (button == sender)
@@ -165,7 +165,7 @@ namespace SNMP_KERI
                 else
                     button.BackColor = Color.FromName("Control");
             vis.clickAction = TopologyVisualizer.TpClickAction.MOVE_LOCATION;
-            log(key: "action", value: "altering node locations");
+            Log(key: "action", value: "altering node locations");
             activeModeLabel.Text = string.Format("ACTION: {0}", "MOVE (LOCATION)");
         }
 
@@ -175,7 +175,7 @@ namespace SNMP_KERI
                 e.Cancel = true;
         }
 
-        private void log(string key, string value)
+        private void Log(string key, string value)
         {
             this.logTextBox.AppendText($"[{key.ToUpper()}]:\t{value}{Environment.NewLine}");
             logLinesCount++;
@@ -185,7 +185,7 @@ namespace SNMP_KERI
                 this.logTextBox.Text = logTextBox.Text.Remove(0, this.logTextBox.Lines[0].Length + Environment.NewLine.Length);
         }
 
-        private void toggleLogButton_Click(object sender, EventArgs e)
+        private void ToggleLogButton_Click(object sender, EventArgs e)
         {
             this.Width = this.Width == 1538 ? 993 : 1538;
         }
@@ -195,7 +195,7 @@ namespace SNMP_KERI
             Thread redrawThread = new Thread(() =>
             {
                 Thread.Sleep(100);
-                vis?.redrawTopology();
+                vis?.RedrawTopology();
                 topologyPictureBox.BeginInvoke(new Action(() => { topologyPictureBox.Focus(); }));
             });
             redrawThread.Name = "Topology redraw thread";
@@ -204,12 +204,12 @@ namespace SNMP_KERI
             translationButton.PerformClick();
         }
 
-        private void transferFocusToPictureBox(object sender, EventArgs e)
+        private void TransferFocusToPictureBox(object sender, EventArgs e)
         {
             topologyPictureBox.Focus();
         }
 
-        private void nodeFlipRotateManualButton_Click(object sender, EventArgs e)
+        private void NodeFlipRotateManualButton_Click(object sender, EventArgs e)
         {
             MessageBox.Show(this, "Hover over any node and you can click buttons:\n'R' to rotate the node (90 degrees)\n'V' to flip the node vertically\n'H' to flip the node horizontally", "Keyboard manual for node rotation/flipping");
             topologyPictureBox.Focus();

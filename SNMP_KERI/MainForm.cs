@@ -34,7 +34,7 @@ namespace SNMP_KERI
                     if (e.Button == MouseButtons.Right)
                     {
                         hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                        hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                        hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.PhyAddr2VisualString(node?.phyAddress));
                         hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
                         hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
                         hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
@@ -59,13 +59,13 @@ namespace SNMP_KERI
                     }
                 }
             );
-            Tools.init(vis);
+            Tools.Init(vis);
 
             // hide hover panel
             hoverPanel.Visible = false;
         }
 
-        private void newConfigurationToolStripMenuItem_Click(object sender, EventArgs e)
+        private void NewConfigurationToolStripMenuItem_Click(object sender, EventArgs e)
         {
             vis = new TopologyVisualizer(topologyPictureBox);
             ConfigEditorForm form = new ConfigEditorForm();
@@ -78,7 +78,7 @@ namespace SNMP_KERI
                         if (evt.Button == MouseButtons.Right)
                         {
                             hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                            hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                            hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.PhyAddr2VisualString(node?.phyAddress));
                             hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
                             hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
                             hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
@@ -103,16 +103,16 @@ namespace SNMP_KERI
                         }
                     }
                 );
-                vis.importNodeXmls(form.resConfigUrl);
-                vis.redrawTopology();
-                Tools.init(vis);
+                vis.ImportNodeXmls(form.resConfigUrl);
+                vis.RedrawTopology();
+                Tools.Init(vis);
                 testStartServiceToolStripMenuItem.Enabled = true;
                 testStopServiceToolStripMenuItem.Enabled = false;
                 MessageBox.Show(this, "Configuration file has been successfully loaded!", "File loaded", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
-        private void loadConfigurationToolStripMenuItem_Click(object sender, EventArgs e)
+        private void LoadConfigurationToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Title = "Pick the (xml) configuration file";
@@ -127,7 +127,7 @@ namespace SNMP_KERI
                             if (evt.Button == MouseButtons.Right)
                             {
                                 hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                                hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                                hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.PhyAddr2VisualString(node?.phyAddress));
                                 hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
                                 hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
                                 hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
@@ -152,8 +152,8 @@ namespace SNMP_KERI
                             }
                         }
                     );
-                    vis.importNodeXmls(dialog.FileName);
-                    vis.redrawTopology();
+                    vis.ImportNodeXmls(dialog.FileName);
+                    vis.RedrawTopology();
                 }
                 catch (Exception ex)
                 {
@@ -163,7 +163,7 @@ namespace SNMP_KERI
                             if (evt.Button == MouseButtons.Right)
                             {
                                 hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                                hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                                hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.PhyAddr2VisualString(node?.phyAddress));
                                 hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
                                 hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
                                 hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
@@ -191,7 +191,7 @@ namespace SNMP_KERI
                     MessageBox.Show(this, "Bad configuration file has been picked, please try again!", "Bad file", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-                Tools.init(vis);
+                Tools.Init(vis);
                 testStartServiceToolStripMenuItem.Enabled = true;
                 testStopServiceToolStripMenuItem.Enabled = false;
                 MessageBox.Show(this, "Configuration file has been successfully loaded!", "File loaded", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -200,7 +200,7 @@ namespace SNMP_KERI
                 MessageBox.Show(this, "Load operation has been canceled!", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
-        private void testStartServiceToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TestStartServiceToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (vis.IsEmpty)
             {
@@ -211,7 +211,7 @@ namespace SNMP_KERI
             Enabled = false;
             testStartServiceToolStripMenuItem.Enabled = false;
             testStopServiceToolStripMenuItem.Enabled = true;
-            Tools.start_snmp_master((nodeId, ipAddress, message, color) =>
+            Tools.StartSNMPMasterThread((nodeId, ipAddress, message, color) =>
             {
                 logTextBox.BeginInvoke((ThreadStart)delegate ()
                 {
@@ -250,19 +250,19 @@ namespace SNMP_KERI
                 BeginInvoke((ThreadStart)delegate ()
                 {
                     Enabled = true;
-                    vis.redrawTopology();
+                    vis.RedrawTopology();
                 });
             });
         }
 
-        private void testStopServiceToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TestStopServiceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Tools.stop_snmp_master();
+            Tools.StopSNMPMasterThread();
             testStartServiceToolStripMenuItem.Enabled = true;
             testStopServiceToolStripMenuItem.Enabled = false;
         }
 
-        private void editConfigurationToolStripMenuItem_Click(object sender, EventArgs e)
+        private void EditConfigurationToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Title = "Pick the existing (xml) configuration file";
@@ -271,7 +271,7 @@ namespace SNMP_KERI
             {
                 vis = new TopologyVisualizer(topologyPictureBox);
                 ConfigEditorForm form = new ConfigEditorForm();
-                form.loadExistingConfig(dialog.FileName);
+                form.LoadExistingConfig(dialog.FileName);
                 form.ShowDialog(this);
                 if (form.resConfigUrl != null)
                 {
@@ -281,7 +281,7 @@ namespace SNMP_KERI
                             if (evt.Button == MouseButtons.Right)
                             {
                                 hoverLabelIpAddress.Text = string.Format("IP: {0}", node?.ipAddress == null ? "N/A" : node?.ipAddress.ToString());
-                                hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.phyAddr2VisualString(node?.phyAddress));
+                                hoverLabelMacAddress.Text = string.Format("MAC: {0}", node?.phyAddress == null ? "N/A" : Tools.PhyAddr2VisualString(node?.phyAddress));
                                 hoverLabelPortA.ForeColor = ((SolidBrush)node?.portA.brush).Color;
                                 hoverLabelPortB.ForeColor = ((SolidBrush)node?.portB.brush).Color;
                                 hoverLabelPortC.ForeColor = ((SolidBrush)node?.portC.brush).Color;
@@ -306,11 +306,11 @@ namespace SNMP_KERI
                             }
                         }
                     );
-                    vis.importNodeXmls(dialog.FileName);
-                    vis.redrawTopology();
-                    vis.importNodeXmls(form.resConfigUrl);
-                    vis.redrawTopology();
-                    Tools.init(vis);
+                    vis.ImportNodeXmls(dialog.FileName);
+                    vis.RedrawTopology();
+                    vis.ImportNodeXmls(form.resConfigUrl);
+                    vis.RedrawTopology();
+                    Tools.Init(vis);
                     testStartServiceToolStripMenuItem.Enabled = true;
                     testStopServiceToolStripMenuItem.Enabled = false;
                     MessageBox.Show(this, "Configuration file has been successfully loaded!", "File loaded", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -320,28 +320,28 @@ namespace SNMP_KERI
                 MessageBox.Show(this, "Edit operation has been canceled!", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
-        private void toggleLogButton_Click(object sender, EventArgs e)
+        private void ToggleLogButton_Click(object sender, EventArgs e)
         {
             this.Width = this.Width == 1544 ? 997 : 1544;
         }
 
-        private void clearLogWindowToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ClearLogWindowToolStripMenuItem_Click(object sender, EventArgs e)
         {
             logTextBox.ReadOnly = false;
             logTextBox.Clear();
         }
 
-        private void splitContainer1_SplitterMoved(object sender, SplitterEventArgs e)
+        private void SplitContainer1_SplitterMoved(object sender, SplitterEventArgs e)
         {
-            vis?.redrawTopology();
+            vis?.RedrawTopology();
         }
 
-        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             MessageBox.Show(this, "This application was created in Networking Systems Lab in Inha University.\n\nIf you have any feedback or suggestion, you can directly contact this application's developer by the email: kobiljon@nsl.inha.ac.kr (Kobiljon Toshnazarov)\n\nThank you =)", "About SNMP KERI v1.3 Application", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void openLastEventLogFileToolStripMenuItem_Click(object sender, EventArgs e)
+        private void OpenLastEventLogFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string filePath = Path.Combine(Tools.EVT_LOGS_DIR, $"{Tools.openLogStreamStamp}.txt");
             string tmpFilePath = Path.GetTempFileName();
@@ -355,12 +355,12 @@ namespace SNMP_KERI
                 MessageBox.Show(this, "SNMP Log file wasn't created yet, please run the service first", "Log doesn't exist yet!", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void openEventLogsDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
+        private void OpenEventLogsDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Process.Start("explorer.exe", Tools.EVT_LOGS_DIR);
         }
 
-        private void openLastPacketLogFileToolStripMenuItem_Click(object sender, EventArgs e)
+        private void OpenLastPacketLogFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string filePath = Path.Combine(Tools.SNMP_DATA_DIR, $"{Tools.openLogStreamStamp}.csv");
             string tmpFilePath = Path.GetTempFileName();
@@ -374,12 +374,12 @@ namespace SNMP_KERI
                 MessageBox.Show(this, "SNMP Log file wasn't created yet, please run the service first", "Log doesn't exist yet!", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void openPacketLogsDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
+        private void OpenPacketLogsDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Process.Start("explorer.exe", Tools.SNMP_DATA_DIR);
         }
 
-        private void clearAllLogsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ClearAllLogsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (testStopServiceToolStripMenuItem.Enabled)
                 testStopServiceToolStripMenuItem.PerformClick();
@@ -388,7 +388,7 @@ namespace SNMP_KERI
             string input = Interaction.InputBox("Please input: \"I want to erase all logs\" in order to erase all the existing logs (+ snmp values and logs)", "Please confirm deletion", null);
             if (input != null && input.Equals("I want to erase all logs"))
             {
-                Tools.releaseStreams();
+                Tools.ReleaseStreams();
 
                 Directory.Delete(Tools.EVT_LOGS_DIR, true);
                 Directory.CreateDirectory(Tools.EVT_LOGS_DIR);
@@ -402,7 +402,7 @@ namespace SNMP_KERI
                 MessageBox.Show(this, "SNMP erase operation has been canceled!", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Hand);
         }
 
-        private void transferFocusToPictureBox(object sender, EventArgs e)
+        private void TransferFocusToPictureBox(object sender, EventArgs e)
         {
             topologyPictureBox.Focus();
         }

@@ -14,14 +14,14 @@ namespace SNMP_KERI
 {
     class Tools
     {
-        internal static void init(TopologyVisualizer visualizer)
+        internal static void Init(TopologyVisualizer visualizer)
         {
             if (!Directory.Exists(EVT_LOGS_DIR))
                 Directory.CreateDirectory(EVT_LOGS_DIR);
             if (!Directory.Exists(SNMP_DATA_DIR))
                 Directory.CreateDirectory(SNMP_DATA_DIR);
 
-            MIB_Info.setUpIdNameMap();
+            MIB_Info.SetUpIdNameMap();
             vis = visualizer;
 
             if (channels != null)
@@ -45,7 +45,7 @@ namespace SNMP_KERI
         private static LoggerDelegate logDeleg;
         #endregion
 
-        internal static void start_snmp_master(LoggerDelegate loggerDelegate, ThreadStart threadStartAction)
+        internal static void StartSNMPMasterThread(LoggerDelegate loggerDelegate, ThreadStart threadStartAction)
         {
             DateTime nowTimestamp = DateTime.Now;
             nowTimestamp = new DateTime(year: nowTimestamp.Year, month: nowTimestamp.Month, day: nowTimestamp.Day, hour: nowTimestamp.Hour, minute: 0, second: 0);
@@ -61,7 +61,7 @@ namespace SNMP_KERI
 
             if (masterThread == null || masterThread.ThreadState.HasFlag(ThreadState.Aborted))
             {
-                masterThread = new Thread((thrStartAction) => runMasterThreadLifecycleAsync(vis, (ThreadStart)thrStartAction));
+                masterThread = new Thread((thrStartAction) => RunMasterThreadLifecycleAsync(vis, (ThreadStart)thrStartAction));
                 masterThread.Name = "SNMP lifecycle (master) thread";
                 masterThread.IsBackground = true;
 
@@ -70,7 +70,7 @@ namespace SNMP_KERI
             }
         }
 
-        internal static void stop_snmp_master()
+        internal static void StopSNMPMasterThread()
         {
             masterThread.Abort();
             masterThread = null;
@@ -89,10 +89,10 @@ namespace SNMP_KERI
 
             foreach (TopologyVisualizer.TopologyNode node in vis.Nodes)
                 node.brush = Brushes.LightYellow;
-            vis.redrawTopology();
+            vis.RedrawTopology();
         }
 
-        private static void runMasterThreadLifecycleAsync(TopologyVisualizer vis, ThreadStart thrStartAction)
+        private static void RunMasterThreadLifecycleAsync(TopologyVisualizer vis, ThreadStart thrStartAction)
         {
             foreach (TopologyVisualizer.TopologyNode node in vis.Nodes)
             {
@@ -156,21 +156,21 @@ namespace SNMP_KERI
                                 node.portB.brush = Brushes.Red;
                                 node.portC.brush = Brushes.Red;
 
-                                lreLinkStatusA.reset();
-                                lreLinkStatusB.reset();
-                                lrePortAdminStateA.reset();
-                                lrePortAdminStateB.reset();
-                                lreCntTxA.reset();
-                                lreCntTxB.reset();
-                                lreCntTxC.reset();
-                                lreCntRxA.reset();
-                                lreCntRxB.reset();
-                                lreCntRxC.reset();
-                                lreCntErrorsA.reset();
-                                lreCntErrorsB.reset();
-                                lreCntErrorsC.reset();
-                                lreCntOwnRxA.reset();
-                                lreCntOwnRxB.reset();
+                                lreLinkStatusA.Reset();
+                                lreLinkStatusB.Reset();
+                                lrePortAdminStateA.Reset();
+                                lrePortAdminStateB.Reset();
+                                lreCntTxA.Reset();
+                                lreCntTxB.Reset();
+                                lreCntTxC.Reset();
+                                lreCntRxA.Reset();
+                                lreCntRxB.Reset();
+                                lreCntRxC.Reset();
+                                lreCntErrorsA.Reset();
+                                lreCntErrorsB.Reset();
+                                lreCntErrorsC.Reset();
+                                lreCntOwnRxA.Reset();
+                                lreCntOwnRxB.Reset();
 
                                 eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tSNMP_REPLY_TIMEOUT\tERROR");
                                 logDeleg(node.id, node.ipAddress, "snmp reply timeout", Color.Red);
@@ -186,7 +186,7 @@ namespace SNMP_KERI
                             StringBuilder sb = new StringBuilder($"{DateTime.Now.ToString()},{node.ipAddress.ToString()}");
                             foreach (Variable elem in result)
                             {
-                                snmpIdValueMap[elem.Id].loadNewValue(int.Parse(elem.Data.ToString()));
+                                snmpIdValueMap[elem.Id].LoadNewValue(int.Parse(elem.Data.ToString()));
                                 sb.Append($",{snmpIdValueMap[elem.Id].NewValue}");
                             }
                             snmpDataWriter.WriteLine(sb.ToString());
@@ -317,22 +317,22 @@ namespace SNMP_KERI
                 }
             }
 
-            vis.redrawTopology();
+            vis.RedrawTopology();
             thrStartAction.BeginInvoke(null, null);
 
             while (true)
             {
                 Thread.Sleep(1000);
-                vis.redrawTopology();
+                vis.RedrawTopology();
                 lock (eventLogsWriter)
                     lock (snmpDataWriter)
                     {
-                        checkUpdateCurrentLogStream();
+                        CheckUpdateCurrentLogStream();
                     }
             }
         }
 
-        internal static string phyAddr2VisualString(PhysicalAddress addr)
+        internal static string PhyAddr2VisualString(PhysicalAddress addr)
         {
             string res = addr?.ToString().ToLower();
             for (int n = res.Length - 2; res != null && n > 1; n -= 2)
@@ -340,17 +340,17 @@ namespace SNMP_KERI
             return res;
         }
 
-        internal static bool extractThePort(TopologyVisualizer.TopologyNode node, string dbElemName, out TopologyVisualizer.TopologyPort thePort)
+        internal static bool ExtractThePort(TopologyVisualizer.TopologyNode node, string dbElemName, out TopologyVisualizer.TopologyPort thePort)
         {
             if (dbElemName.StartsWith("rx_") || dbElemName.StartsWith("status_") || dbElemName.StartsWith("port_"))
-                return node.getPortByDbName(dbElemName, out thePort);
+                return node.GetPortByDbName(dbElemName, out thePort);
             thePort = null;
             return false;
         }
 
         internal delegate void LoggerDelegate(int nodeId = default(int), IPAddress ipAddress = default(IPAddress), string message = default(string), Color color = default(Color));
 
-        private static void checkUpdateCurrentLogStream()
+        private static void CheckUpdateCurrentLogStream()
         {
             DateTime nowTimestamp = DateTime.Now;
             nowTimestamp = new DateTime(year: nowTimestamp.Year, month: nowTimestamp.Month, day: nowTimestamp.Day, hour: nowTimestamp.Hour, minute: 0, second: 0);
@@ -377,7 +377,7 @@ namespace SNMP_KERI
                 }
         }
 
-        internal static void releaseStreams()
+        internal static void ReleaseStreams()
         {
             eventLogsWriter?.Flush();
             eventLogsWriter?.Close();
@@ -394,7 +394,7 @@ namespace SNMP_KERI
         private static bool initialized = false;
         #endregion
 
-        internal static void setUpIdNameMap()
+        internal static void SetUpIdNameMap()
         {
             if (initialized)
                 return;
@@ -403,33 +403,33 @@ namespace SNMP_KERI
             objects = new List<Variable>();
             objectNames = new Dictionary<ObjectIdentifier, string>();
 
-            addElem("1.0.62439.2.21.0.1.0.1.1.9.1", "status_a"); // lreLinkStatusA
-            addElem("1.0.62439.2.21.0.1.0.1.1.10.1", "status_b"); // lreLinkStatusB
-            addElem("1.0.62439.2.21.0.1.0.1.1.7.1", "port_a"); // lrePortAdminStateA
-            addElem("1.0.62439.2.21.0.1.0.1.1.8.1", "port_b"); // lrePortAdminStateB
-            addElem("1.0.62439.2.21.1.1.0.1.1.2.1", "tx_a"); // lreCntTxA
-            addElem("1.0.62439.2.21.1.1.0.1.1.3.1", "tx_b"); // lreCntTxB 
-            addElem("1.0.62439.2.21.1.1.0.1.1.4.1", "tx_c"); // lreCntTxC
-            addElem("1.0.62439.2.21.1.1.0.1.1.8.1", "rx_a"); // lreCntRxA
-            addElem("1.0.62439.2.21.1.1.0.1.1.9.1", "rx_b"); // lreCntRxB
-            addElem("1.0.62439.2.21.1.1.0.1.1.10.1", "rx_c"); // lreCntRxC
-            addElem("1.0.62439.2.21.1.1.0.1.1.11.1", "error_a"); // lreCntErrorsA
-            addElem("1.0.62439.2.21.1.1.0.1.1.12.1", "error_b"); // lreCntErrorsB
-            addElem("1.0.62439.2.21.1.1.0.1.1.13.1", "error_c");  // lreCntErrorsC
-            addElem("1.0.62439.2.21.1.1.0.1.1.25.1", "o_rx_a"); // lreCntOwnRxA
-            addElem("1.0.62439.2.21.1.1.0.1.1.26.1", "o_rx_b"); // lreCntOwnRxB
+            AddElem("1.0.62439.2.21.0.1.0.1.1.9.1", "status_a"); // lreLinkStatusA
+            AddElem("1.0.62439.2.21.0.1.0.1.1.10.1", "status_b"); // lreLinkStatusB
+            AddElem("1.0.62439.2.21.0.1.0.1.1.7.1", "port_a"); // lrePortAdminStateA
+            AddElem("1.0.62439.2.21.0.1.0.1.1.8.1", "port_b"); // lrePortAdminStateB
+            AddElem("1.0.62439.2.21.1.1.0.1.1.2.1", "tx_a"); // lreCntTxA
+            AddElem("1.0.62439.2.21.1.1.0.1.1.3.1", "tx_b"); // lreCntTxB 
+            AddElem("1.0.62439.2.21.1.1.0.1.1.4.1", "tx_c"); // lreCntTxC
+            AddElem("1.0.62439.2.21.1.1.0.1.1.8.1", "rx_a"); // lreCntRxA
+            AddElem("1.0.62439.2.21.1.1.0.1.1.9.1", "rx_b"); // lreCntRxB
+            AddElem("1.0.62439.2.21.1.1.0.1.1.10.1", "rx_c"); // lreCntRxC
+            AddElem("1.0.62439.2.21.1.1.0.1.1.11.1", "error_a"); // lreCntErrorsA
+            AddElem("1.0.62439.2.21.1.1.0.1.1.12.1", "error_b"); // lreCntErrorsB
+            AddElem("1.0.62439.2.21.1.1.0.1.1.13.1", "error_c");  // lreCntErrorsC
+            AddElem("1.0.62439.2.21.1.1.0.1.1.25.1", "o_rx_a"); // lreCntOwnRxA
+            AddElem("1.0.62439.2.21.1.1.0.1.1.26.1", "o_rx_b"); // lreCntOwnRxB
 
             initialized = true;
         }
 
-        private static void addElem(string idStr, string db_name)
+        private static void AddElem(string idStr, string db_name)
         {
             ObjectIdentifier id = new ObjectIdentifier(idStr);
             objectNames.Add(id, db_name);
             objects.Add(new Variable(id));
         }
 
-        internal static string getName(ObjectIdentifier objectId)
+        internal static string GetName(ObjectIdentifier objectId)
         {
             return objectNames[objectId];
         }
@@ -440,7 +440,7 @@ namespace SNMP_KERI
         internal SnmpValue(ObjectIdentifier id)
         {
             Id = id;
-            Name = MIB_Info.getName(id);
+            Name = MIB_Info.GetName(id);
             OldValue = -1;
             NewValue = -1;
 
@@ -466,7 +466,7 @@ namespace SNMP_KERI
         internal int DecreasedCounter { get; set; }
         #endregion
 
-        internal void reset()
+        internal void Reset()
         {
             OldValue = -1;
             NewValue = -1;
@@ -479,7 +479,7 @@ namespace SNMP_KERI
             DecreasedCounter = 0;
         }
 
-        internal void loadNewValue(int newValue)
+        internal void LoadNewValue(int newValue)
         {
             OldValue = NewValue;
             NewValue = newValue;

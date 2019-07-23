@@ -78,10 +78,10 @@ namespace SNMP_KERI
             this.nextNodeId = 0;
             this.pBoxSize = topologyPictureBox.Size;
 
-            topologyPictureBox.MouseDown += nodeMouseDownHandler;
-            topologyPictureBox.MouseUp += nodeMouseUpHandler;
-            topologyPictureBox.MouseMove += nodeMouseMoveHandler;
-            topologyPictureBox.PreviewKeyDown += nodePreviewKeyDownHandler;
+            topologyPictureBox.MouseDown += NodeMouseDownHandler;
+            topologyPictureBox.MouseUp += NodeMouseUpHandler;
+            topologyPictureBox.MouseMove += NodeMouseMoveHandler;
+            topologyPictureBox.PreviewKeyDown += NodePreviewKeyDownHandler;
 
             topologyPictureBox.InitialImage = null;
             this.logTextBox = logTextBox;
@@ -90,21 +90,21 @@ namespace SNMP_KERI
 
             clickAction = TpClickAction.NONE;
 
-            clearCanvas();
+            ClearCanvas();
         }
 
-        internal TopologyNode addNode(short posX, short posY, short rPortConn = TopologyPort.DISCONNECTED, short lPortConn = TopologyPort.DISCONNECTED, short tPortConn = TopologyPort.DISCONNECTED)
+        internal TopologyNode AddNode(short posX, short posY, short rPortConn = TopologyPort.DISCONNECTED, short lPortConn = TopologyPort.DISCONNECTED, short tPortConn = TopologyPort.DISCONNECTED)
         {
             TopologyNode newNode = new TopologyNode(nextNodeId, posX, posY, NODE_WIDTH, NODE_HEIGHT, NTITLE_MARGIN);
-            newNode.setRightPortConn(rPortConn);
-            newNode.setLeftPortConn(lPortConn);
-            newNode.setTopPortConn(tPortConn);
+            newNode.SetRightPortConn(rPortConn);
+            newNode.SetLeftPortConn(lPortConn);
+            newNode.SetTopPortConn(tPortConn);
             nodes.Add(newNode.id, newNode);
             nextNodeId++;
             return newNode;
         }
 
-        private void drawNodeRect(TopologyNode node)
+        private void DrawNodeRect(TopologyNode node)
         {
             // Port-Boxes' dimensions (inner rectangles)
             short pBoxW = (short)(node.portC.endLoc.x - node.portC.startLoc.x);
@@ -123,7 +123,7 @@ namespace SNMP_KERI
             // Top port - C
             canvas.DrawRectangle(Pens.Black, node.portC.startLoc.x, node.portC.startLoc.y, pBoxW, pBoxH);
             canvas.FillRectangle(node.portC.brush, node.portC.startLoc.x + 1, node.portC.startLoc.y + 1, pBoxW - 1, pBoxH - 1);
-            TopologyLoc center = node.portC.getCenter();
+            TopologyLoc center = node.portC.GetCenter();
             string cPortNaming = "C";
             Font cPortFont = font;
             if (node.type == TopologyNode.TpNodeType.REDBOXP || node.type == TopologyNode.TpNodeType.REDBOXH)
@@ -138,17 +138,17 @@ namespace SNMP_KERI
             // Right port - B
             canvas.DrawRectangle(Pens.Black, node.portB.startLoc.x, node.portB.startLoc.y, pBoxW, pBoxH);
             canvas.FillRectangle(node.portB.brush, node.portB.startLoc.x + 1, node.portB.startLoc.y + 1, pBoxW - 1, pBoxH - 1);
-            center = node.portB.getCenter();
+            center = node.portB.GetCenter();
             canvas.DrawString("B", font, Brushes.White, center.x - 6, center.y - 5);
 
             // Left port - A
             canvas.DrawRectangle(Pens.Black, node.portA.startLoc.x, node.portA.startLoc.y, pBoxW, pBoxH);
             canvas.FillRectangle(node.portA.brush, node.portA.startLoc.x + 1, node.portA.startLoc.y + 1, pBoxW - 1, pBoxH - 1);
-            center = node.portA.getCenter();
+            center = node.portA.GetCenter();
             canvas.DrawString("A", font, Brushes.White, center.x - 6, center.y - 5);
         }
 
-        private void eraseNodeRect(TopologyNode node)
+        private void EraseNodeRect(TopologyNode node)
         {
             // Port-Boxes' dimensions (inner rectangles)
             short pBoxW = (short)(node.portC.endLoc.x - node.portC.startLoc.x);
@@ -160,19 +160,19 @@ namespace SNMP_KERI
             canvas.FillRectangle(Brushes.White, node.startLoc.x, node.startLoc.y, NODE_WIDTH + 1, NODE_HEIGHT + 1);
         }
 
-        private TopologyPort getPortAt(TopologyNode node, int x, int y)
+        private TopologyPort GetPortAt(TopologyNode node, int x, int y)
         {
-            if (node.isInLocation(x, y))
-                if (node.portA.isInLocation(x, y))
+            if (node.IsInLocation(x, y))
+                if (node.portA.IsInLocation(x, y))
                     return node.portA;
-                else if (node.portB.isInLocation(x, y))
+                else if (node.portB.IsInLocation(x, y))
                     return node.portB;
-                else if (node.portC.isInLocation(x, y))
+                else if (node.portC.IsInLocation(x, y))
                     return node.portC;
             return null;
         }
 
-        private void clearPortConnections(params TopologyPort[] ports)
+        private void ClearPortConnections(params TopologyPort[] ports)
         {
             foreach (TopologyPort port in ports)
             {
@@ -204,7 +204,7 @@ namespace SNMP_KERI
             }
         }
 
-        private void attachPorts(TopologyPort port1, TopologyPort port2)
+        private void AttachPorts(TopologyPort port1, TopologyPort port2)
         {
             port1.connPortId = port2.parent.id;
             port1.connPortType = port2.type;
@@ -215,48 +215,48 @@ namespace SNMP_KERI
             port2.connLinkDrawn = false;
         }
 
-        internal void redrawTopology(bool bringUpFocusNode = false)
+        internal void RedrawTopology(bool bringUpFocusNode = false)
         {
             canvasPictureBox.Invoke((MethodInvoker)delegate
             {
                 // Clear out the existing topology
-                clearCanvas();
+                ClearCanvas();
 
                 // Draw nodes
                 foreach (TopologyNode node in nodes.Values)
                     if (bringUpFocusNode)
                         if (node != activeNode)
-                            drawNodeRect(node);
+                            DrawNodeRect(node);
                         else
                             continue;
                     else
-                        drawNodeRect(node);
+                        DrawNodeRect(node);
 
                 if (bringUpFocusNode)
-                    drawNodeRect(activeNode);
+                    DrawNodeRect(activeNode);
 
                 // Draw connections
                 foreach (TopologyNode srcNode in nodes.Values)
                 {
                     if (!srcNode.portA.connLinkDrawn && srcNode.portA.connPortId != TopologyPort.DISCONNECTED) // Connection on the left port
                     {
-                        TopologyLoc srcLoc = TopologyLoc.centerOf(srcNode.portA.startLoc, srcNode.portA.endLoc);
+                        TopologyLoc srcLoc = TopologyLoc.CenterOf(srcNode.portA.startLoc, srcNode.portA.endLoc);
                         TopologyNode trgNode = nodes[srcNode.portA.connPortId];
                         TopologyLoc trgLoc;
 
                         if (srcNode.portA.connPortType == TopologyPort.TpPortType.LEFT)
                         {
-                            trgLoc = TopologyLoc.centerOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
+                            trgLoc = TopologyLoc.CenterOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
                             trgNode.portA.connLinkDrawn = true;
                         }
                         else if (srcNode.portA.connPortType == TopologyPort.TpPortType.RIGHT)
                         {
-                            trgLoc = TopologyLoc.centerOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
+                            trgLoc = TopologyLoc.CenterOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
                             trgNode.portB.connLinkDrawn = true;
                         }
                         else
                         {
-                            trgLoc = TopologyLoc.centerOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
+                            trgLoc = TopologyLoc.CenterOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
                             trgNode.portC.connLinkDrawn = true;
                         }
 
@@ -265,23 +265,23 @@ namespace SNMP_KERI
 
                     if (!srcNode.portB.connLinkDrawn && srcNode.portB.connPortId != TopologyPort.DISCONNECTED) // Connection on the right port
                     {
-                        TopologyLoc srcLoc = TopologyLoc.centerOf(srcNode.portB.startLoc, srcNode.portB.endLoc);
+                        TopologyLoc srcLoc = TopologyLoc.CenterOf(srcNode.portB.startLoc, srcNode.portB.endLoc);
                         TopologyNode trgNode = nodes[srcNode.portB.connPortId];
                         TopologyLoc trgLoc;
 
                         if (srcNode.portB.connPortType == TopologyPort.TpPortType.LEFT)
                         {
-                            trgLoc = TopologyLoc.centerOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
+                            trgLoc = TopologyLoc.CenterOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
                             trgNode.portA.connLinkDrawn = true;
                         }
                         else if (srcNode.portB.connPortType == TopologyPort.TpPortType.RIGHT)
                         {
-                            trgLoc = TopologyLoc.centerOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
+                            trgLoc = TopologyLoc.CenterOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
                             trgNode.portB.connLinkDrawn = true;
                         }
                         else
                         {
-                            trgLoc = TopologyLoc.centerOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
+                            trgLoc = TopologyLoc.CenterOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
                             trgNode.portC.connLinkDrawn = true;
                         }
 
@@ -290,23 +290,23 @@ namespace SNMP_KERI
 
                     if (!srcNode.portC.connLinkDrawn && srcNode.portC.connPortId != TopologyPort.DISCONNECTED) // Connection on the top port
                     {
-                        TopologyLoc srcLoc = TopologyLoc.centerOf(srcNode.portC.startLoc, srcNode.portC.endLoc);
+                        TopologyLoc srcLoc = TopologyLoc.CenterOf(srcNode.portC.startLoc, srcNode.portC.endLoc);
                         TopologyNode trgNode = nodes[srcNode.portC.connPortId];
                         TopologyLoc trgLoc;
 
                         if (srcNode.portC.connPortType == TopologyPort.TpPortType.LEFT)
                         {
-                            trgLoc = TopologyLoc.centerOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
+                            trgLoc = TopologyLoc.CenterOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
                             trgNode.portA.connLinkDrawn = true;
                         }
                         else if (srcNode.portC.connPortType == TopologyPort.TpPortType.RIGHT)
                         {
-                            trgLoc = TopologyLoc.centerOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
+                            trgLoc = TopologyLoc.CenterOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
                             trgNode.portB.connLinkDrawn = true;
                         }
                         else
                         {
-                            trgLoc = TopologyLoc.centerOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
+                            trgLoc = TopologyLoc.CenterOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
                             trgNode.portC.connLinkDrawn = true;
                         }
 
@@ -318,21 +318,21 @@ namespace SNMP_KERI
             });
         }
 
-        private void clearCanvas()
+        private void ClearCanvas()
         {
             this.canvas = canvasPictureBox.CreateGraphics();
             this.canvas.Clear(Color.White);
             foreach (TopologyNode node in nodes.Values)
-                node.clearConnDrawCache();
+                node.ClearConnDrawCache();
         }
 
         #region Node-Click event handlers
-        private void nodeMouseDownHandler(object sender, MouseEventArgs e)
+        private void NodeMouseDownHandler(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
                 foreach (TopologyNode _node in nodes.Values)
-                    if (_node.isInLocation(e.X, e.Y))
+                    if (_node.IsInLocation(e.X, e.Y))
                     {
                         switch (clickAction)
                         {
@@ -346,7 +346,7 @@ namespace SNMP_KERI
                                 break;
                             case TpClickAction.SET_CONNECTIONS:
                                 {
-                                    TopologyPort port = getPortAt(_node, e.X, e.Y);
+                                    TopologyPort port = GetPortAt(_node, e.X, e.Y);
                                     if (port == null)
                                         break;
                                     else if (activePort != null)
@@ -358,7 +358,7 @@ namespace SNMP_KERI
                                             activePort.brush = Brushes.Green;
 
                                             activePort = port;
-                                            redrawTopology();
+                                            RedrawTopology();
                                             break;
                                         }
 
@@ -372,9 +372,9 @@ namespace SNMP_KERI
                                         port.brush = Brushes.Green;
                                         activePort.brush = Brushes.Green;
 
-                                        clearPortConnections(port, activePort);
-                                        attachPorts(port, activePort);
-                                        redrawTopology();
+                                        ClearPortConnections(port, activePort);
+                                        AttachPorts(port, activePort);
+                                        RedrawTopology();
 
                                         activePort = null;
                                     }
@@ -402,7 +402,7 @@ namespace SNMP_KERI
                     if (activePort != null)
                     {
                         activePort.brush = Brushes.Green;
-                        clearPortConnections(activePort);
+                        ClearPortConnections(activePort);
                     }
 
                     this.activeNode = null;
@@ -413,7 +413,7 @@ namespace SNMP_KERI
 
                 // In case user tried to see node details
                 foreach (TopologyNode _node in nodes.Values)
-                    if (_node.isInLocation(e.X, e.Y))
+                    if (_node.IsInLocation(e.X, e.Y))
                     {
                         nodeNonLeftMouseDownDelegate?.Invoke(_node, e);
                         break;
@@ -421,12 +421,12 @@ namespace SNMP_KERI
             }
         }
 
-        private void nodeMouseUpHandler(object sender, MouseEventArgs e)
+        private void NodeMouseUpHandler(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
                 if (activeNode != null)
-                    if (activeNode.isInLocation(e.Location.X, e.Location.Y))
+                    if (activeNode.IsInLocation(e.Location.X, e.Location.Y))
                         switch (clickAction)
                         {
                             case TpClickAction.MOVE_LOCATION:
@@ -435,18 +435,18 @@ namespace SNMP_KERI
                                 this.activeNode = null;
                                 break;
                             case TpClickAction.SET_CONNECTIONS:
-                                nodeLeftClickHandler(activeNode);
+                                NodeLeftClickHandler(activeNode);
                                 break;
                             case TpClickAction.SET_NODE_TYPE:
-                                nodeLeftClickHandler(activeNode);
+                                NodeLeftClickHandler(activeNode);
                                 this.activeNode = null;
                                 break;
                             case TpClickAction.SET_NODE_IP:
-                                nodeLeftClickHandler(activeNode);
+                                NodeLeftClickHandler(activeNode);
                                 this.activeNode = null;
                                 break;
                             case TpClickAction.SET_NODE_MAC:
-                                nodeLeftClickHandler(activeNode);
+                                NodeLeftClickHandler(activeNode);
                                 this.activeNode = null;
                                 break;
                             default:
@@ -459,10 +459,10 @@ namespace SNMP_KERI
             {
                 nodeNonLeftMouseUpDelegate?.Invoke(e);
             }
-            redrawTopology();
+            RedrawTopology();
         }
 
-        private void nodeMouseMoveHandler(object sender, MouseEventArgs e)
+        private void NodeMouseMoveHandler(object sender, MouseEventArgs e)
         {
             if (clickAction == TpClickAction.MOVE_LOCATION)
                 if (translateNode)
@@ -472,11 +472,11 @@ namespace SNMP_KERI
                     inside = inside & (toX <= this.pBoxSize.Width - this.activeNode.endLoc.x + this.activeNode.startLoc.x & toY <= this.pBoxSize.Height - this.activeNode.endLoc.y + this.activeNode.startLoc.y);
 
                     if (inside)
-                        this.activeNode.translateToLoc((short)(e.X - mouseLocDiffX), (short)(e.Y - mouseLocDiffY), this);
+                        this.activeNode.TranslateToLoc((short)(e.X - mouseLocDiffX), (short)(e.Y - mouseLocDiffY), this);
                 }
         }
 
-        private void nodePreviewKeyDownHandler(object sender, PreviewKeyDownEventArgs e)
+        private void NodePreviewKeyDownHandler(object sender, PreviewKeyDownEventArgs e)
         {
             if (clickAction == TpClickAction.NONE)
                 return;
@@ -497,27 +497,27 @@ namespace SNMP_KERI
             else return;
 
             foreach (TopologyNode _node in nodes.Values)
-                if (_node.isInLocation(cursorLoc.X, cursorLoc.Y))
+                if (_node.IsInLocation(cursorLoc.X, cursorLoc.Y))
                 {
                     switch (e.KeyCode)
                     {
                         case Keys.R: // Rotate action
-                            _node.rotate();
+                            _node.Rotate();
                             break;
                         case Keys.V:
-                            _node.flipVertically();
+                            _node.FlipVertically();
                             break;
                         case Keys.H:
-                            _node.flipHorizontally();
+                            _node.FlipHorizontally();
                             break;
                         default:
                             break;
                     }
-                    redrawTopology();
+                    RedrawTopology();
                 }
         }
 
-        private void nodeLeftClickHandler(TopologyNode node)
+        private void NodeLeftClickHandler(TopologyNode node)
         {
             if (node == null)
                 return;
@@ -537,31 +537,31 @@ namespace SNMP_KERI
                         {
                             case TopologyNode.TpNodeType.DANP:
                                 node.type = TopologyNode.TpNodeType.DANP;
-                                log(node, "type", "DANP");
+                                Log(node, "type", "DANP");
                                 break;
                             case TopologyNode.TpNodeType.DANH:
                                 node.type = TopologyNode.TpNodeType.DANH;
-                                log(node, "type", "DANH");
+                                Log(node, "type", "DANH");
                                 break;
                             case TopologyNode.TpNodeType.REDBOXP:
                                 node.type = TopologyNode.TpNodeType.REDBOXP;
-                                log(node, "type", "REDBOXP");
+                                Log(node, "type", "REDBOXP");
                                 break;
                             case TopologyNode.TpNodeType.REDBOXH:
                                 node.type = TopologyNode.TpNodeType.REDBOXH;
-                                log(node, "type", "REDBOXH");
+                                Log(node, "type", "REDBOXH");
                                 break;
                             case TopologyNode.TpNodeType.VDANH:
                                 node.type = TopologyNode.TpNodeType.VDANH;
-                                log(node, "type", "VDANH");
+                                Log(node, "type", "VDANH");
                                 break;
                             case TopologyNode.TpNodeType.VDANP:
                                 node.type = TopologyNode.TpNodeType.VDANP;
-                                log(node, "type", "VDANP");
+                                Log(node, "type", "VDANP");
                                 break;
                             default:
                                 node.type = TopologyNode.TpNodeType.DEFAULT;
-                                log(node, "type", "UNSET");
+                                Log(node, "type", "UNSET");
                                 break;
                         }
                     else
@@ -572,7 +572,7 @@ namespace SNMP_KERI
                     if (Regex.IsMatch(input, "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"))
                     {
                         node.ipAddress = IPAddress.Parse(input);
-                        log(node, "IP address", node.ipAddress.ToString());
+                        Log(node, "IP address", node.ipAddress.ToString());
                     }
                     else
                         MessageBox.Show("IP Address is invalid, please trin!", "Invalid IP Address", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -582,7 +582,7 @@ namespace SNMP_KERI
                     if (Regex.IsMatch(input, "^([0-9A-Fa-f]{2}-){5}([0-9A-Fa-f]{2})$"))
                     {
                         node.phyAddress = PhysicalAddress.Parse(input.ToUpper());
-                        log(node, "type", node.phyAddress.ToString());
+                        Log(node, "type", node.phyAddress.ToString());
                     }
                     else
                         MessageBox.Show("Physical Address is invalid, please try again!", "Invalid Physical Address", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -705,7 +705,7 @@ namespace SNMP_KERI
             internal PhysicalAddress phyAddress;
             #endregion
 
-            internal bool getPortByDbName(string dbName, out TopologyPort thePort)
+            internal bool GetPortByDbName(string dbName, out TopologyPort thePort)
             {
                 switch (dbName[dbName.Length - 1])
                 {
@@ -724,29 +724,29 @@ namespace SNMP_KERI
                 }
             }
 
-            internal void clearConnDrawCache()
+            internal void ClearConnDrawCache()
             {
                 this.portC.connLinkDrawn = false;
                 this.portB.connLinkDrawn = false;
                 this.portA.connLinkDrawn = false;
             }
 
-            internal void setRightPortConn(short rPortConnId)
+            internal void SetRightPortConn(short rPortConnId)
             {
                 this.portB.connPortId = rPortConnId;
             }
 
-            internal void setLeftPortConn(short lPortConnId)
+            internal void SetLeftPortConn(short lPortConnId)
             {
                 this.portA.connPortId = lPortConnId;
             }
 
-            internal void setTopPortConn(short tPortConnId)
+            internal void SetTopPortConn(short tPortConnId)
             {
                 this.portC.connPortId = tPortConnId;
             }
 
-            internal void translateToLoc(short newX, short newY, TopologyVisualizer redrawVis = null)
+            internal void TranslateToLoc(short newX, short newY, TopologyVisualizer redrawVis = null)
             {
                 short deltaX = (short)(newX - this.startLoc.x);
                 short deltaY = (short)(newY - this.startLoc.y);
@@ -754,7 +754,7 @@ namespace SNMP_KERI
                 if (redrawVis != null)
                 {
                     //redrawVis.canvas.DrawRectangle(Pens.White, this.startLoc.x, startLoc.y, this.endLoc.x - this.startLoc.x, this.endLoc.y - this.startLoc.y);
-                    redrawVis.eraseNodeRect(this);
+                    redrawVis.EraseNodeRect(this);
                 }
 
                 this.startLoc.x = newX;
@@ -780,11 +780,11 @@ namespace SNMP_KERI
                 if (redrawVis != null)
                 {
                     //redrawVis.canvas.DrawRectangle(Pens.Red, this.startLoc.x, startLoc.y, this.endLoc.x - this.startLoc.x, this.endLoc.y - this.startLoc.y);
-                    redrawVis.drawNodeRect(this);
+                    redrawVis.DrawNodeRect(this);
                 }
             }
 
-            internal void rotate()
+            internal void Rotate()
             {
                 // rotate PORT_A (left port)
                 if (portA.startLoc.x == startLoc.x)
@@ -796,7 +796,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: (short)(endLoc.x - portA.Width),
                             y: short.MinValue
                         ));
@@ -808,7 +808,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |██    |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: startLoc.y
                         ));
@@ -823,7 +823,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |    ██|
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: (short)(endLoc.y - portA.Height)
                         ));
@@ -835,7 +835,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |    ██|      |██    |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: startLoc.x,
                             y: short.MinValue
                         ));
@@ -852,7 +852,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: (short)(endLoc.x - portB.Width),
                             y: short.MinValue
                         ));
@@ -864,7 +864,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |██    |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: startLoc.y
                         ));
@@ -879,7 +879,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |    ██|
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: (short)(endLoc.y - portB.Height)
                         ));
@@ -891,7 +891,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |    ██|      |██    |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: startLoc.x,
                             y: short.MinValue
                         ));
@@ -906,7 +906,7 @@ namespace SNMP_KERI
                     //  |██    |  ->  |      |
                     //  |      |      |      |
                     //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                    portC.translateToLoc(new TopologyLoc(
+                    portC.TranslateToLoc(new TopologyLoc(
                         x: (short)(startLoc.x + portC.Width),
                         y: startLoc.y
                     ));
@@ -918,7 +918,7 @@ namespace SNMP_KERI
                     //  |      |  ->  |    ██|
                     //  |      |      |      |
                     //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                    portC.translateToLoc(new TopologyLoc(
+                    portC.TranslateToLoc(new TopologyLoc(
                         x: (short)(endLoc.x - portC.Width),
                         y: (short)(startLoc.y + portC.Height)
                     ));
@@ -930,7 +930,7 @@ namespace SNMP_KERI
                     //  |    ██|  ->  |      |
                     //  |      |      |  ██  |
                     //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                    portC.translateToLoc(new TopologyLoc(
+                    portC.TranslateToLoc(new TopologyLoc(
                         x: (short)(startLoc.x + portC.Width),
                         y: (short)(endLoc.y - portC.Height)
                     ));
@@ -942,14 +942,14 @@ namespace SNMP_KERI
                     //  |      |  ->  |██    |
                     //  |  ██  |      |      |
                     //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                    portC.translateToLoc(new TopologyLoc(
+                    portC.TranslateToLoc(new TopologyLoc(
                         x: startLoc.x,
                         y: (short)(startLoc.y + portC.Height)
                     ));
                 }
             }
 
-            internal void flipVertically()
+            internal void FlipVertically()
             {
                 // rotate PORT_A (left port)
                 if (portA.startLoc.x == startLoc.x)
@@ -961,7 +961,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |██    |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: (short)(endLoc.y - portA.Height)
                         ));
@@ -973,7 +973,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |██    |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: startLoc.y
                         ));
@@ -988,7 +988,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |    ██|
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: (short)(endLoc.y - portA.Height)
                         ));
@@ -1000,7 +1000,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |    ██|      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: startLoc.y
                         ));
@@ -1017,7 +1017,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |██    |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: (short)(endLoc.y - portB.Height)
                         ));
@@ -1029,7 +1029,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |██    |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: startLoc.y
                         ));
@@ -1044,7 +1044,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |    ██|
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: (short)(endLoc.y - portB.Height)
                         ));
@@ -1056,7 +1056,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |    ██|      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: short.MinValue,
                             y: startLoc.y
                         ));
@@ -1079,7 +1079,7 @@ namespace SNMP_KERI
                     //  |      |  ->  |      |
                     //  |      |      |  ██  |
                     //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                    portC.translateToLoc(new TopologyLoc(
+                    portC.TranslateToLoc(new TopologyLoc(
                         x: short.MinValue,
                         y: (short)(endLoc.y - portC.Height)
                     ));
@@ -1099,14 +1099,14 @@ namespace SNMP_KERI
                     //  |      |  ->  |      |
                     //  |  ██  |      |      |
                     //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                    portC.translateToLoc(new TopologyLoc(
+                    portC.TranslateToLoc(new TopologyLoc(
                         x: short.MinValue,
                         y: startLoc.y
                     ));
                 }
             }
 
-            internal void flipHorizontally()
+            internal void FlipHorizontally()
             {
                 // rotate PORT_A (left port)
                 if (portA.startLoc.x == startLoc.x)
@@ -1118,7 +1118,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: (short)(endLoc.x - portA.Width),
                             y: short.MinValue
                         ));
@@ -1130,7 +1130,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |██    |      |    ██|
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: (short)(endLoc.x - portA.Width),
                             y: short.MinValue
                         ));
@@ -1145,7 +1145,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: startLoc.x,
                             y: short.MinValue
                         ));
@@ -1157,7 +1157,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |    ██|      |██    |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portA.translateToLoc(new TopologyLoc(
+                        portA.TranslateToLoc(new TopologyLoc(
                             x: startLoc.x,
                             y: short.MinValue
                         ));
@@ -1174,7 +1174,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: (short)(endLoc.x - portB.Width),
                             y: short.MinValue
                         ));
@@ -1186,7 +1186,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |██    |      |    ██|
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: (short)(endLoc.x - portB.Width),
                             y: short.MinValue
                         ));
@@ -1201,7 +1201,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |      |      |      |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: startLoc.x,
                             y: short.MinValue
                         ));
@@ -1213,7 +1213,7 @@ namespace SNMP_KERI
                         //  |      |  ->  |      |
                         //  |    ██|      |██    |
                         //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                        portB.translateToLoc(new TopologyLoc(
+                        portB.TranslateToLoc(new TopologyLoc(
                             x: startLoc.x,
                             y: short.MinValue
                         ));
@@ -1228,7 +1228,7 @@ namespace SNMP_KERI
                     //  |██    |  ->  |    ██|
                     //  |      |      |      |
                     //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                    portC.translateToLoc(new TopologyLoc(
+                    portC.TranslateToLoc(new TopologyLoc(
                         x: (short)(endLoc.x - portC.Width),
                         y: short.MinValue
                     ));
@@ -1248,7 +1248,7 @@ namespace SNMP_KERI
                     //  |    ██|  ->  |██    |
                     //  |      |      |      |
                     //   ‾‾‾‾‾‾        ‾‾‾‾‾‾
-                    portC.translateToLoc(new TopologyLoc(
+                    portC.TranslateToLoc(new TopologyLoc(
                         x: startLoc.x,
                         y: short.MinValue
                     ));
@@ -1263,12 +1263,12 @@ namespace SNMP_KERI
                 }
             }
 
-            internal bool isInLocation(int x, int y)
+            internal bool IsInLocation(int x, int y)
             {
                 return (startLoc.x <= x & x <= endLoc.x) && (startLoc.y <= y & y <= endLoc.y);
             }
 
-            public XElement toXmlElement(string descr = "")
+            public XElement ToXmlElement(string descr = "")
             {
                 XElement res = new XElement("TpNode", new XAttribute("descr", descr));
 
@@ -1276,16 +1276,16 @@ namespace SNMP_KERI
                 id.Value = this.id.ToString();
                 res.Add(id);
 
-                res.Add(this.startLoc.toXmlElement("Starting Location"));
-                res.Add(this.endLoc.toXmlElement("Ending Location"));
+                res.Add(this.startLoc.ToXmlElement("Starting Location"));
+                res.Add(this.endLoc.ToXmlElement("Ending Location"));
 
                 XElement topMargin = new XElement("topMargin");
                 topMargin.Value = this.topMargin.ToString();
                 res.Add(topMargin);
 
-                res.Add(this.portC.toXmlElement("Top Port"));
-                res.Add(this.portB.toXmlElement("Right Port"));
-                res.Add(this.portA.toXmlElement("Left Port"));
+                res.Add(this.portC.ToXmlElement("Top Port"));
+                res.Add(this.portB.ToXmlElement("Right Port"));
+                res.Add(this.portA.ToXmlElement("Left Port"));
 
                 XElement type = new XElement("type");
                 type.Value = this.type.ToString("d");
@@ -1304,24 +1304,24 @@ namespace SNMP_KERI
                 return res;
             }
 
-            public static TopologyNode parseXml(XElement tpLocXml)
+            public static TopologyNode ParseXml(XElement tpLocXml)
             {
                 TopologyNode res = new TopologyNode();
 
                 XNode node = tpLocXml.FirstNode;
                 short id = short.Parse(((XElement)node).Value);
                 node = node.NextNode;
-                TopologyLoc startLoc = TopologyLoc.parseXml((XElement)node);
+                TopologyLoc startLoc = TopologyLoc.ParseXml((XElement)node);
                 node = node.NextNode;
-                TopologyLoc endLoc = TopologyLoc.parseXml((XElement)node);
+                TopologyLoc endLoc = TopologyLoc.ParseXml((XElement)node);
                 node = node.NextNode;
                 short topMargin = short.Parse(((XElement)node).Value);
                 node = node.NextNode;
-                TopologyPort tPort = TopologyPort.parseXml(res, (XElement)node);
+                TopologyPort tPort = TopologyPort.ParseXml(res, (XElement)node);
                 node = node.NextNode;
-                TopologyPort rPort = TopologyPort.parseXml(res, (XElement)node);
+                TopologyPort rPort = TopologyPort.ParseXml(res, (XElement)node);
                 node = node.NextNode;
-                TopologyPort lPort = TopologyPort.parseXml(res, (XElement)node);
+                TopologyPort lPort = TopologyPort.ParseXml(res, (XElement)node);
                 node = node.NextNode;
                 TpNodeType type = (TpNodeType)int.Parse(((XElement)node).Value);
 
@@ -1377,12 +1377,12 @@ namespace SNMP_KERI
                 this.brush = brush ?? Brushes.Green;
             }
 
-            internal bool isInLocation(int x, int y)
+            internal bool IsInLocation(int x, int y)
             {
                 return (startLoc.x <= x & x <= endLoc.x) && (startLoc.y <= y & y <= endLoc.y);
             }
 
-            internal TopologyLoc getCenter()
+            internal TopologyLoc GetCenter()
             {
                 return new TopologyLoc
                 {
@@ -1391,7 +1391,7 @@ namespace SNMP_KERI
                 };
             }
 
-            internal void translateToLoc(TopologyLoc toLoc)
+            internal void TranslateToLoc(TopologyLoc toLoc)
             {
                 if (toLoc.x != short.MinValue)
                 {
@@ -1406,7 +1406,7 @@ namespace SNMP_KERI
                 }
             }
 
-            public XElement toXmlElement(string descr = "")
+            public XElement ToXmlElement(string descr = "")
             {
                 XElement res = new XElement("TpPort", new XAttribute("descr", descr));
 
@@ -1414,8 +1414,8 @@ namespace SNMP_KERI
                 type.Value = this.type.ToString("d");
                 res.Add(type);
 
-                res.Add(this.startLoc.toXmlElement("Starting Location"));
-                res.Add(this.endLoc.toXmlElement("Ending Location"));
+                res.Add(this.startLoc.ToXmlElement("Starting Location"));
+                res.Add(this.endLoc.ToXmlElement("Ending Location"));
 
                 XElement connId = new XElement("connId");
                 connId.Value = this.connPortId.ToString();
@@ -1428,14 +1428,14 @@ namespace SNMP_KERI
                 return res;
             }
 
-            public static TopologyPort parseXml(TopologyNode parent, XElement tpLocXml)
+            public static TopologyPort ParseXml(TopologyNode parent, XElement tpLocXml)
             {
                 XNode node = tpLocXml.FirstNode;
                 TpPortType type = (TpPortType)int.Parse(((XElement)node).Value);
                 node = node.NextNode;
-                TopologyLoc startLoc = TopologyLoc.parseXml((XElement)node);
+                TopologyLoc startLoc = TopologyLoc.ParseXml((XElement)node);
                 node = node.NextNode;
-                TopologyLoc endLoc = TopologyLoc.parseXml((XElement)node);
+                TopologyLoc endLoc = TopologyLoc.ParseXml((XElement)node);
                 node = node.NextNode;
                 short connId = short.Parse(((XElement)node).Value);
                 node = node.NextNode;
@@ -1460,7 +1460,7 @@ namespace SNMP_KERI
             internal short x;
             internal short y;
 
-            internal static TopologyLoc centerOf(TopologyLoc startLoc, TopologyLoc endLoc)
+            internal static TopologyLoc CenterOf(TopologyLoc startLoc, TopologyLoc endLoc)
             {
                 return new TopologyLoc((short)(startLoc.x + (endLoc.x - startLoc.x) / 2), (short)(startLoc.y + (endLoc.y - startLoc.y) / 2));
             }
@@ -1470,7 +1470,7 @@ namespace SNMP_KERI
                 return new Point(loc.x, loc.y);
             }
 
-            public XElement toXmlElement(string descr = "")
+            public XElement ToXmlElement(string descr = "")
             {
                 XElement res = new XElement("TpLoc", new XAttribute("descr", descr));
 
@@ -1485,7 +1485,7 @@ namespace SNMP_KERI
                 return res;
             }
 
-            public static TopologyLoc parseXml(XElement tpLocXml)
+            public static TopologyLoc ParseXml(XElement tpLocXml)
             {
                 XNode node = tpLocXml.FirstNode;
 
@@ -1498,16 +1498,16 @@ namespace SNMP_KERI
         }
         #endregion
 
-        internal void exportNodeXmls(string xmlFilePath, string timestamp = "")
+        internal void ExportNodeXmls(string xmlFilePath, string timestamp = "")
         {
             XElement root = new XElement("TpNodes", new XAttribute("timestamp", timestamp));
             foreach (TopologyNode node in nodes.Values)
-                root.Add(node.toXmlElement(string.Format("Node {0}", node.id)));
+                root.Add(node.ToXmlElement(string.Format("Node {0}", node.id)));
             using (StreamWriter file = new StreamWriter(xmlFilePath, false))
                 file.WriteLine(root.ToString());
         }
 
-        internal void importNodeXmls(string xmlFilePath)
+        internal void ImportNodeXmls(string xmlFilePath)
         {
             nodes.Clear();
 
@@ -1515,12 +1515,12 @@ namespace SNMP_KERI
 
             foreach (XNode xNode in root.Nodes())
             {
-                TopologyNode tpNode = TopologyNode.parseXml((XElement)xNode);
+                TopologyNode tpNode = TopologyNode.ParseXml((XElement)xNode);
                 nodes.Add(tpNode.id, tpNode);
             }
         }
 
-        private void log(TopologyNode node = null, string key = null, string value = null)
+        private void Log(TopologyNode node = null, string key = null, string value = null)
         {
             if (this.logTextBox != null)
             {
