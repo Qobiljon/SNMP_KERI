@@ -36,21 +36,23 @@ namespace SNMP_KERI
         {
             bool editMode = this.vis != null;
             int numOfNodes = -1;
+            int numOfSwitches = -1;
 
             if (editMode)
                 numOfNodes = vis.NumOfNodes;
             else
             {
-                string resp = Interaction.InputBox(Prompt: "Please enter the number of nodes", DefaultResponse: null);
-                if (!int.TryParse(resp, out numOfNodes))
+                string numOfNodesStr = Interaction.InputBox(Prompt: "Please enter the number of nodes", DefaultResponse: null);
+                string numOfSwitchesStr = Interaction.InputBox(Prompt: "Please enter the number of switches", DefaultResponse: null);
+                if (!int.TryParse(numOfNodesStr, out numOfNodes) || !int.TryParse(numOfSwitchesStr, out numOfSwitches))
                 {
                     forceCloseForm = true;
                     Close();
                     return;
                 }
-                if (numOfNodes <= 0)
+                if (numOfNodes <= 0 || numOfSwitches < 0)
                 {
-                    MessageBox.Show(this, "Input must be greater than zero!", "Wrong input", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, "Number of nodes must be greater than zero and number of switches must be greater than or equal to zero!", "Wrong input", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     forceCloseForm = true;
                     Close();
                     return;
@@ -63,11 +65,31 @@ namespace SNMP_KERI
             int numOfCols = (topologyPictureBox.Width - 2 * MARGIN) / (TopologyVisualizer.NODE_WIDTH + 2 * MARGIN);
             TopologyVisualizer.TopologyNode lastNode = null;
             TopologyVisualizer.TopologyNode[] exisNodes = editMode ? vis.Nodes : null;
+            TopologyVisualizer.TopologySwitchNode lastSwitchNode = null;
+            TopologyVisualizer.TopologySwitchNode[] exisSwitchNodes = editMode ? vis.SwitchNodes : null;
+            short switchDeltaY = (short)(numOfSwitches == 0 ? 0 : TopologyVisualizer.SWITCH_HEIGHT + MARGIN);
+            for (int n = 0, r = 0, c = 0; n < numOfSwitches; n++)
+            {
+                lastSwitchNode = editMode ? exisSwitchNodes[n] : vis.AddSwitchNode(
+                    posX: (short)((TopologyVisualizer.SWITCH_WIDTH + 2 * MARGIN) * c + MARGIN),
+                    posY: (short)((TopologyVisualizer.SWITCH_HEIGHT + 2 * MARGIN) * r + MARGIN)
+                );
+
+                if (c == numOfCols)
+                {
+                    r++;
+                    c = 0;
+                    switchDeltaY += TopologyVisualizer.SWITCH_HEIGHT + MARGIN;
+                }
+                else
+                    c++;
+            }
             for (int n = 0, r = 0, c = 0; n < numOfNodes; n++)
             {
-                short posX = (short)((TopologyVisualizer.NODE_WIDTH + 2 * MARGIN) * c + MARGIN);
-                short posY = (short)((TopologyVisualizer.NODE_WIDTH + 2 * MARGIN) * r + MARGIN);
-                lastNode = editMode ? exisNodes[n] : vis.AddNode(posX, posY);
+                lastNode = editMode ? exisNodes[n] : vis.AddNode(
+                    posX: (short)((TopologyVisualizer.NODE_WIDTH + 2 * MARGIN) * c + MARGIN),
+                    posY: (short)((TopologyVisualizer.NODE_HEIGHT + 2 * MARGIN) * r + MARGIN + switchDeltaY)
+                );
 
                 if (c == numOfCols)
                 {
@@ -83,6 +105,26 @@ namespace SNMP_KERI
 
             vis.clickAction = TopologyVisualizer.TpClickAction.MOVE_LOCATION;
             Log(key: "action", value: "altering node locations");
+        }
+
+        private void ConfigCreator_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (!this.forceCloseForm && MessageBox.Show(this, "Are you sure you want to close this window?\n\nPlease make sure to save the configuration before closing if needed!", "Confirm closing", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                e.Cancel = true;
+        }
+
+        private void ConfigCreator_Shown(object sender, EventArgs e)
+        {
+            Thread redrawThread = new Thread(() =>
+            {
+                Thread.Sleep(100);
+                vis?.RedrawTopology();
+                topologyPictureBox.BeginInvoke(new Action(() => { topologyPictureBox.Focus(); }));
+            });
+            redrawThread.Name = "Topology redraw thread";
+            redrawThread.Start();
+
+            translationButton.PerformClick();
         }
 
         private void SaveButton_Click(object sender, EventArgs e)
@@ -169,12 +211,6 @@ namespace SNMP_KERI
             activeModeLabel.Text = string.Format("ACTION: {0}", "MOVE (LOCATION)");
         }
 
-        private void ConfigCreator_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            if (!this.forceCloseForm && MessageBox.Show(this, "Are you sure you want to close this window?\n\nPlease make sure to save the configuration before closing if needed!", "Confirm closing", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
-                e.Cancel = true;
-        }
-
         private void Log(string key, string value)
         {
             this.logTextBox.AppendText($"[{key.ToUpper()}]:\t{value}{Environment.NewLine}");
@@ -188,20 +224,6 @@ namespace SNMP_KERI
         private void ToggleLogButton_Click(object sender, EventArgs e)
         {
             this.Width = this.Width == 1538 ? 993 : 1538;
-        }
-
-        private void ConfigCreator_Shown(object sender, EventArgs e)
-        {
-            Thread redrawThread = new Thread(() =>
-            {
-                Thread.Sleep(100);
-                vis?.RedrawTopology();
-                topologyPictureBox.BeginInvoke(new Action(() => { topologyPictureBox.Focus(); }));
-            });
-            redrawThread.Name = "Topology redraw thread";
-            redrawThread.Start();
-
-            translationButton.PerformClick();
         }
 
         private void TransferFocusToPictureBox(object sender, EventArgs e)

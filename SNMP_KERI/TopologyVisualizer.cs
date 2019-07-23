@@ -28,18 +28,21 @@ namespace SNMP_KERI
         internal const short NTITLE_MARGIN = 15; // node<->title margin
         internal const short NODE_WIDTH = 60; // divisible by 6
         internal const short NODE_HEIGHT = 60; // divisible by 6
+        internal const short SWITCH_WIDTH = NODE_WIDTH / 3;
+        internal const short SWITCH_HEIGHT = NODE_HEIGHT / 3;
         internal const short MAX_LOG_LINES_COUNT = 250;
         #endregion
 
         #region Variables
         internal PictureBox canvasPictureBox;
         internal Graphics canvas;
-        private Font font;
+        private readonly Font font;
         private TextBox logTextBox;
 
         internal TpClickAction clickAction;
 
         private Dictionary<short, TopologyNode> nodes;
+        private Dictionary<short, TopologySwitchNode> switchNodes;
         internal TopologyNode[] Nodes
         {
             get
@@ -49,19 +52,30 @@ namespace SNMP_KERI
                 return res;
             }
         }
+        internal TopologySwitchNode[] SwitchNodes
+        {
+            get
+            {
+                TopologySwitchNode[] res = new TopologySwitchNode[switchNodes.Count];
+                switchNodes.Values.CopyTo(res, 0);
+                return res;
+            }
+        }
         internal int NumOfNodes { get { return nodes.Count; } }
         internal bool IsEmpty { get { return nodes == null || nodes.Count == 0; } }
         private short nextNodeId;
+        private short nextSwitchNodeId;
         private bool translateNode;
         private short mouseLocDiffX, mouseLocDiffY;
         private short origNodePosX, origNodePosY;
         private TopologyNode activeNode;
         private TopologyPort activePort;
-        private Size pBoxSize;
+        private TopologySwitchNode activeSwitchNode;
+        private Size canvasSize;
         private short logLinesCount;
 
-        private NodeNonLeftMouseDownDelegate nodeNonLeftMouseDownDelegate;
-        private NodeNonLeftMouseUpDelegate nodeNonLeftMouseUpDelegate;
+        private readonly NodeNonLeftMouseDownDelegate nodeNonLeftMouseDownDelegate;
+        private readonly NodeNonLeftMouseUpDelegate nodeNonLeftMouseUpDelegate;
         #endregion
 
         internal TopologyVisualizer(PictureBox topologyPictureBox, TextBox logTextBox = null, NodeNonLeftMouseDownDelegate nodeNonLeftMouseDownDelegate = null, NodeNonLeftMouseUpDelegate nodeNonLeftMouseUpDelegate = null)
@@ -75,8 +89,10 @@ namespace SNMP_KERI
             this.canvas = topologyPictureBox.CreateGraphics();
             this.font = topologyPictureBox.Font;
             this.nodes = new Dictionary<short, TopologyNode>();
+            this.switchNodes = new Dictionary<short, TopologySwitchNode>();
             this.nextNodeId = 0;
-            this.pBoxSize = topologyPictureBox.Size;
+            this.nextSwitchNodeId = short.MaxValue;
+            this.canvasSize = topologyPictureBox.Size;
 
             topologyPictureBox.MouseDown += NodeMouseDownHandler;
             topologyPictureBox.MouseUp += NodeMouseUpHandler;
@@ -102,6 +118,14 @@ namespace SNMP_KERI
             nodes.Add(newNode.id, newNode);
             nextNodeId++;
             return newNode;
+        }
+
+        internal TopologySwitchNode AddSwitchNode(short posX, short posY)
+        {
+            TopologySwitchNode switchNode = new TopologySwitchNode(nextSwitchNodeId, posX, posY, SWITCH_WIDTH, SWITCH_HEIGHT);
+            switchNodes.Add(switchNode.id, switchNode);
+            nextSwitchNodeId--;
+            return switchNode;
         }
 
         private void DrawNodeRect(TopologyNode node)
@@ -148,16 +172,45 @@ namespace SNMP_KERI
             canvas.DrawString("A", font, Brushes.White, center.x - 6, center.y - 5);
         }
 
-        private void EraseNodeRect(TopologyNode node)
+        private void DrawSwitchNodeRect(TopologySwitchNode switchNode)
         {
-            // Port-Boxes' dimensions (inner rectangles)
-            short pBoxW = (short)(node.portC.endLoc.x - node.portC.startLoc.x);
-            short pBoxH = (short)(node.portC.endLoc.y - node.portC.startLoc.y);
-
-            canvas.FillRectangle(Brushes.White, node.startLoc.x - 10, node.startLoc.y - node.topMargin, NODE_WIDTH + 60, node.topMargin);
-
             // Body
-            canvas.FillRectangle(Brushes.White, node.startLoc.x, node.startLoc.y, NODE_WIDTH + 1, NODE_HEIGHT + 1);
+            canvas.DrawRectangle(Pens.Black, switchNode.startLoc.x, switchNode.startLoc.y, SWITCH_WIDTH, SWITCH_HEIGHT);
+            canvas.FillRectangle(switchNode.brush, switchNode.startLoc.x + 1, switchNode.startLoc.y + 1, SWITCH_WIDTH - 1, SWITCH_HEIGHT - 1);
+        }
+
+        private void EraseNodeRect(TopologyElement element)
+        {
+            if (element is TopologyNode)
+            {
+                // Title
+                canvas.FillRectangle(
+                    Brushes.White,
+                    element.startLoc.x - 10,
+                    element.startLoc.y - (element as TopologyNode).topMargin,
+                    NODE_WIDTH + 60,
+                    (element as TopologyNode).topMargin
+                );
+                // Body
+                canvas.FillRectangle(
+                    Brushes.White,
+                    element.startLoc.x,
+                    element.startLoc.y,
+                    NODE_WIDTH + 1,
+                    NODE_HEIGHT + 1
+                );
+            }
+            else if (element is TopologySwitchNode)
+            {
+                // Body
+                canvas.FillRectangle(
+                    Brushes.White,
+                    element.startLoc.x,
+                    element.startLoc.y,
+                    SWITCH_WIDTH + 1,
+                    SWITCH_HEIGHT + 1
+                );
+            }
         }
 
         private TopologyPort GetPortAt(TopologyNode node, int x, int y)
@@ -172,11 +225,27 @@ namespace SNMP_KERI
             return null;
         }
 
+        private TopologySwitchNode GetSwitchNodeAt(int x, int y)
+        {
+            foreach (TopologySwitchNode switchNode in switchNodes.Values)
+                if (switchNode.IsInLocation(x, y))
+                    return switchNode;
+            return null;
+        }
+
+        private TopologyNode GetNodeAt(int x, int y)
+        {
+            foreach (TopologyNode node in nodes.Values)
+                if (node.IsInLocation(x, y))
+                    return node;
+            return null;
+        }
+
         private void ClearPortConnections(params TopologyPort[] ports)
         {
             foreach (TopologyPort port in ports)
             {
-                if (port.connPortId != TopologyPort.DISCONNECTED)
+                if (!(port is TopologySwitchNode) && !switchNodes.ContainsKey(port.connPortId) && port.connPortId != TopologyPort.DISCONNECTED)
                 {
                     TopologyNode node = nodes[port.connPortId];
                     if (node.portA.connPortId == port.parent.id)
@@ -206,13 +275,25 @@ namespace SNMP_KERI
 
         private void AttachPorts(TopologyPort port1, TopologyPort port2)
         {
-            port1.connPortId = port2.parent.id;
-            port1.connPortType = port2.type;
-            port1.connLinkDrawn = false;
+            if (port1 is TopologySwitchNode || port2 is TopologySwitchNode)
+            {
+                TopologySwitchNode switchNode = (port1 is TopologySwitchNode ? port1 : port2) as TopologySwitchNode;
+                TopologyPort port = port1 == switchNode ? port2 : port1;
 
-            port2.connPortId = port1.parent.id;
-            port2.connPortType = port1.type;
-            port2.connLinkDrawn = false;
+                port.connPortId = switchNode.id;
+                port.connPortType = TopologyPort.TpPortType.NULL;
+                port.connLinkDrawn = false;
+            }
+            else
+            {
+                port1.connPortId = port2.parent.id;
+                port1.connPortType = port2.type;
+                port1.connLinkDrawn = false;
+
+                port2.connPortId = port1.parent.id;
+                port2.connPortType = port1.type;
+                port2.connLinkDrawn = false;
+            }
         }
 
         internal void RedrawTopology(bool bringUpFocusNode = false)
@@ -221,6 +302,10 @@ namespace SNMP_KERI
             {
                 // Clear out the existing topology
                 ClearCanvas();
+
+                // Draw switches
+                foreach (TopologySwitchNode switchNode in switchNodes.Values)
+                    DrawSwitchNodeRect(switchNode);
 
                 // Draw nodes
                 foreach (TopologyNode node in nodes.Values)
@@ -241,76 +326,154 @@ namespace SNMP_KERI
                     if (!srcNode.portA.connLinkDrawn && srcNode.portA.connPortId != TopologyPort.DISCONNECTED) // Connection on the left port
                     {
                         TopologyLoc srcLoc = TopologyLoc.CenterOf(srcNode.portA.startLoc, srcNode.portA.endLoc);
-                        TopologyNode trgNode = nodes[srcNode.portA.connPortId];
-                        TopologyLoc trgLoc;
+                        TopologyNode trgNode = nodes.ContainsKey(srcNode.portA.connPortId) ? nodes[srcNode.portA.connPortId] : null;
+                        TopologySwitchNode trgSwitch = switchNodes.ContainsKey(srcNode.portA.connPortId) ? switchNodes[srcNode.portA.connPortId] : null;
+                        TopologyLoc trgLoc = new TopologyLoc(-1, -1);
 
                         if (srcNode.portA.connPortType == TopologyPort.TpPortType.LEFT)
                         {
-                            trgLoc = TopologyLoc.CenterOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
-                            trgNode.portA.connLinkDrawn = true;
+                            if (trgNode != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
+                                trgNode.portA.connLinkDrawn = true;
+                            }
+                            else if (trgSwitch != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgSwitch.startLoc, trgSwitch.endLoc);
+                                trgSwitch.connLinkDrawn = true;
+                            }
                         }
                         else if (srcNode.portA.connPortType == TopologyPort.TpPortType.RIGHT)
                         {
-                            trgLoc = TopologyLoc.CenterOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
-                            trgNode.portB.connLinkDrawn = true;
+                            if (trgNode != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
+                                trgNode.portB.connLinkDrawn = true;
+                            }
+                            else if (trgSwitch != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgSwitch.startLoc, trgSwitch.endLoc);
+                                trgSwitch.connLinkDrawn = true;
+                            }
                         }
                         else
                         {
-                            trgLoc = TopologyLoc.CenterOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
-                            trgNode.portC.connLinkDrawn = true;
+                            if (trgNode != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
+                                trgNode.portC.connLinkDrawn = true;
+                            }
+                            else if (trgSwitch != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgSwitch.startLoc, trgSwitch.endLoc);
+                                trgSwitch.connLinkDrawn = true;
+                            }
                         }
 
-                        canvas.DrawLine(Pens.Black, (Point)srcLoc, (Point)trgLoc);
+                        if (!trgLoc.Is(-1, -1))
+                            canvas.DrawLine(Pens.Black, (Point)srcLoc, (Point)trgLoc);
                     }
 
                     if (!srcNode.portB.connLinkDrawn && srcNode.portB.connPortId != TopologyPort.DISCONNECTED) // Connection on the right port
                     {
                         TopologyLoc srcLoc = TopologyLoc.CenterOf(srcNode.portB.startLoc, srcNode.portB.endLoc);
-                        TopologyNode trgNode = nodes[srcNode.portB.connPortId];
-                        TopologyLoc trgLoc;
+                        TopologyNode trgNode = nodes.ContainsKey(srcNode.portB.connPortId) ? nodes[srcNode.portB.connPortId] : null;
+                        TopologySwitchNode trgSwitch = switchNodes.ContainsKey(srcNode.portB.connPortId) ? switchNodes[srcNode.portB.connPortId] : null;
+                        TopologyLoc trgLoc = new TopologyLoc(-1, -1);
 
                         if (srcNode.portB.connPortType == TopologyPort.TpPortType.LEFT)
                         {
-                            trgLoc = TopologyLoc.CenterOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
-                            trgNode.portA.connLinkDrawn = true;
+                            if (trgNode != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
+                                trgNode.portA.connLinkDrawn = true;
+                            }
+                            else if (trgSwitch != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgSwitch.startLoc, trgSwitch.endLoc);
+                                trgSwitch.connLinkDrawn = true;
+                            }
                         }
                         else if (srcNode.portB.connPortType == TopologyPort.TpPortType.RIGHT)
                         {
-                            trgLoc = TopologyLoc.CenterOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
-                            trgNode.portB.connLinkDrawn = true;
+                            if (trgNode != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
+                                trgNode.portB.connLinkDrawn = true;
+                            }
+                            else if (trgSwitch != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgSwitch.startLoc, trgSwitch.endLoc);
+                                trgSwitch.connLinkDrawn = true;
+                            }
                         }
                         else
                         {
-                            trgLoc = TopologyLoc.CenterOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
-                            trgNode.portC.connLinkDrawn = true;
+                            if (trgNode != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
+                                trgNode.portC.connLinkDrawn = true;
+                            }
+                            else if (trgSwitch != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgSwitch.startLoc, trgSwitch.endLoc);
+                                trgSwitch.connLinkDrawn = true;
+                            }
                         }
 
-                        canvas.DrawLine(Pens.Black, (Point)srcLoc, (Point)trgLoc);
+                        if (!trgLoc.Is(-1, -1))
+                            canvas.DrawLine(Pens.Black, (Point)srcLoc, (Point)trgLoc);
                     }
 
                     if (!srcNode.portC.connLinkDrawn && srcNode.portC.connPortId != TopologyPort.DISCONNECTED) // Connection on the top port
                     {
                         TopologyLoc srcLoc = TopologyLoc.CenterOf(srcNode.portC.startLoc, srcNode.portC.endLoc);
-                        TopologyNode trgNode = nodes[srcNode.portC.connPortId];
-                        TopologyLoc trgLoc;
+                        TopologyNode trgNode = nodes.ContainsKey(srcNode.portC.connPortId) ? nodes[srcNode.portC.connPortId] : null;
+                        TopologySwitchNode trgSwitch = switchNodes.ContainsKey(srcNode.portC.connPortId) ? switchNodes[srcNode.portC.connPortId] : null;
+                        TopologyLoc trgLoc = new TopologyLoc(-1, -1);
 
                         if (srcNode.portC.connPortType == TopologyPort.TpPortType.LEFT)
                         {
-                            trgLoc = TopologyLoc.CenterOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
-                            trgNode.portA.connLinkDrawn = true;
+                            if (trgNode != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgNode.portA.startLoc, trgNode.portA.endLoc);
+                                trgNode.portA.connLinkDrawn = true;
+                            }
+                            else if (trgSwitch != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgSwitch.startLoc, trgSwitch.endLoc);
+                                trgSwitch.connLinkDrawn = true;
+                            }
                         }
                         else if (srcNode.portC.connPortType == TopologyPort.TpPortType.RIGHT)
                         {
-                            trgLoc = TopologyLoc.CenterOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
-                            trgNode.portB.connLinkDrawn = true;
+                            if (trgNode != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgNode.portB.startLoc, trgNode.portB.endLoc);
+                                trgNode.portB.connLinkDrawn = true;
+                            }
+                            else if (trgSwitch != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgSwitch.startLoc, trgSwitch.endLoc);
+                                trgSwitch.connLinkDrawn = true;
+                            }
                         }
                         else
                         {
-                            trgLoc = TopologyLoc.CenterOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
-                            trgNode.portC.connLinkDrawn = true;
+                            if (trgNode != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgNode.portC.startLoc, trgNode.portC.endLoc);
+                                trgNode.portC.connLinkDrawn = true;
+                            }
+                            else if (trgSwitch != null)
+                            {
+                                trgLoc = TopologyLoc.CenterOf(trgSwitch.startLoc, trgSwitch.endLoc);
+                                trgSwitch.connLinkDrawn = true;
+                            }
                         }
 
-                        canvas.DrawLine(Pens.Black, (Point)srcLoc, (Point)trgLoc);
+                        if (!trgLoc.Is(-1, -1))
+                            canvas.DrawLine(Pens.Black, (Point)srcLoc, (Point)trgLoc);
                     }
                 }
 
@@ -329,70 +492,113 @@ namespace SNMP_KERI
         #region Node-Click event handlers
         private void NodeMouseDownHandler(object sender, MouseEventArgs e)
         {
+            TopologyNode _node = GetNodeAt(e.X, e.Y);
+            TopologySwitchNode _switchNode = GetSwitchNodeAt(e.X, e.Y);
             if (e.Button == MouseButtons.Left)
             {
-                foreach (TopologyNode _node in nodes.Values)
-                    if (_node.IsInLocation(e.X, e.Y))
+                if (_node != null)
+                    switch (clickAction)
                     {
-                        switch (clickAction)
-                        {
-                            case TpClickAction.MOVE_LOCATION:
-                                this.activeNode = _node;
-                                this.translateNode = true;
-                                this.origNodePosX = _node.startLoc.x;
-                                this.origNodePosY = _node.startLoc.y;
-                                this.mouseLocDiffX = (short)(e.X - _node.startLoc.x);
-                                this.mouseLocDiffY = (short)(e.Y - _node.startLoc.y);
-                                break;
-                            case TpClickAction.SET_CONNECTIONS:
-                                {
-                                    TopologyPort port = GetPortAt(_node, e.X, e.Y);
-                                    if (port == null)
+                        case TpClickAction.MOVE_LOCATION:
+                            this.activeNode = _node;
+                            this.translateNode = true;
+                            this.origNodePosX = _node.startLoc.x;
+                            this.origNodePosY = _node.startLoc.y;
+                            this.mouseLocDiffX = (short)(e.X - _node.startLoc.x);
+                            this.mouseLocDiffY = (short)(e.Y - _node.startLoc.y);
+                            break;
+                        case TpClickAction.SET_CONNECTIONS:
+                            {
+                                TopologyPort port = GetPortAt(_node, e.X, e.Y);
+                                if (port == null)
+                                    break;
+                                else if (activePort != null)
+                                    if (port == activePort)
                                         break;
-                                    else if (activePort != null)
-                                        if (port == activePort)
-                                            break;
-                                        else if (port.parent == activePort.parent)
-                                        {
-                                            port.brush = Brushes.DarkOrange;
-                                            activePort.brush = Brushes.Green;
+                                    else if (port.parent == activePort.parent)
+                                    {
+                                        port.brush = Brushes.DarkOrange;
+                                        activePort.brush = Brushes.Green;
 
-                                            activePort = port;
-                                            RedrawTopology();
-                                            break;
-                                        }
+                                        activePort = port;
+                                        RedrawTopology();
+                                        break;
+                                    }
 
-                                    if (activePort == null)
+                                if (activePort == null)
+                                {
+                                    if (this.activeSwitchNode != null)
+                                    {
+                                        port.brush = Brushes.Green;
+                                        this.activeSwitchNode.brush = Brushes.SlateBlue;
+
+                                        ClearPortConnections(port);
+                                        AttachPorts(port, activeSwitchNode);
+                                        RedrawTopology();
+
+                                        this.activeSwitchNode = null;
+                                    }
+                                    else
                                     {
                                         activePort = port;
                                         activePort.brush = Brushes.DarkOrange;
                                     }
-                                    else
-                                    {
-                                        port.brush = Brushes.Green;
-                                        activePort.brush = Brushes.Green;
-
-                                        ClearPortConnections(port, activePort);
-                                        AttachPorts(port, activePort);
-                                        RedrawTopology();
-
-                                        activePort = null;
-                                    }
                                 }
+                                else
+                                {
+                                    port.brush = Brushes.Green;
+                                    activePort.brush = Brushes.Green;
+
+                                    ClearPortConnections(port, activePort);
+                                    AttachPorts(port, activePort);
+                                    RedrawTopology();
+
+                                    activePort = null;
+                                }
+                            }
+                            break;
+                        case TpClickAction.SET_NODE_TYPE:
+                            this.activeNode = _node;
+                            break;
+                        case TpClickAction.SET_NODE_IP:
+                            this.activeNode = _node;
+                            break;
+                        case TpClickAction.SET_NODE_MAC:
+                            this.activeNode = _node;
+                            break;
+                        default:
+                            break;
+                    }
+                else if (_switchNode != null)
+                    switch (clickAction)
+                    {
+                        case TpClickAction.MOVE_LOCATION:
+                            this.activeSwitchNode = _switchNode;
+                            this.translateNode = true;
+                            this.origNodePosX = _switchNode.startLoc.x;
+                            this.origNodePosY = _switchNode.startLoc.y;
+                            this.mouseLocDiffX = (short)(e.X - _switchNode.startLoc.x);
+                            this.mouseLocDiffY = (short)(e.Y - _switchNode.startLoc.y);
+                            break;
+                        case TpClickAction.SET_CONNECTIONS:
+                            if (activePort == null)
                                 break;
-                            case TpClickAction.SET_NODE_TYPE:
-                                this.activeNode = _node;
-                                break;
-                            case TpClickAction.SET_NODE_IP:
-                                this.activeNode = _node;
-                                break;
-                            case TpClickAction.SET_NODE_MAC:
-                                this.activeNode = _node;
-                                break;
-                            default:
-                                break;
-                        }
-                        break;
+                            else
+                            {
+                                _switchNode.brush = Brushes.SlateBlue;
+                                this.activePort.brush = Brushes.Green;
+
+                                ClearPortConnections(activePort);
+                                AttachPorts(_switchNode, activePort);
+                                RedrawTopology();
+
+                                this.activeNode = null;
+                                this.activePort = null;
+                                this.activeSwitchNode = null;
+                            }
+                            break;
+                        default:
+                            break;
                     }
             }
             else
@@ -404,20 +610,19 @@ namespace SNMP_KERI
                         activePort.brush = Brushes.Green;
                         ClearPortConnections(activePort);
                     }
+                    if (activeSwitchNode != null)
+                        activeSwitchNode.brush = Brushes.SlateBlue;
 
                     this.activeNode = null;
                     this.activePort = null;
+                    this.activeSwitchNode = null;
                     this.translateNode = false;
                     //log(value: "actions canceled (action: mouse right click)");
                 }
 
                 // In case user tried to see node details
-                foreach (TopologyNode _node in nodes.Values)
-                    if (_node.IsInLocation(e.X, e.Y))
-                    {
-                        nodeNonLeftMouseDownDelegate?.Invoke(_node, e);
-                        break;
-                    }
+                if (_node != null)
+                    nodeNonLeftMouseDownDelegate?.Invoke(_node, e);
             }
         }
 
@@ -425,55 +630,75 @@ namespace SNMP_KERI
         {
             if (e.Button == MouseButtons.Left)
             {
-                if (activeNode != null)
-                    if (activeNode.IsInLocation(e.Location.X, e.Location.Y))
-                        switch (clickAction)
-                        {
-                            case TpClickAction.MOVE_LOCATION:
-                                if (e.Button == MouseButtons.Left)
-                                    this.translateNode = false;
-                                this.activeNode = null;
-                                break;
-                            case TpClickAction.SET_CONNECTIONS:
-                                NodeLeftClickHandler(activeNode);
-                                break;
-                            case TpClickAction.SET_NODE_TYPE:
-                                NodeLeftClickHandler(activeNode);
-                                this.activeNode = null;
-                                break;
-                            case TpClickAction.SET_NODE_IP:
-                                NodeLeftClickHandler(activeNode);
-                                this.activeNode = null;
-                                break;
-                            case TpClickAction.SET_NODE_MAC:
-                                NodeLeftClickHandler(activeNode);
-                                this.activeNode = null;
-                                break;
-                            default:
-                                break;
-                        }
-                    else
-                        activeNode = null;
+                switch (clickAction)
+                {
+                    case TpClickAction.MOVE_LOCATION:
+                        if (e.Button == MouseButtons.Left)
+                            this.translateNode = false;
+                        break;
+                    case TpClickAction.SET_CONNECTIONS:
+                        if (this.activeNode != null)
+                            NodeLeftClickHandler(this.activeNode);
+                        else if (this.activeSwitchNode != null)
+                            NodeLeftClickHandler(this.activeSwitchNode);
+                        break;
+                    case TpClickAction.SET_NODE_TYPE:
+                        if (this.activeNode != null)
+                            NodeLeftClickHandler(this.activeNode);
+                        else if (this.activeSwitchNode != null)
+                            NodeLeftClickHandler(this.activeSwitchNode);
+                        break;
+                    case TpClickAction.SET_NODE_IP:
+                        if (this.activeNode != null)
+                            NodeLeftClickHandler(this.activeNode);
+                        else if (this.activeSwitchNode != null)
+                            NodeLeftClickHandler(this.activeSwitchNode);
+                        break;
+                    case TpClickAction.SET_NODE_MAC:
+                        if (this.activeNode != null)
+                            NodeLeftClickHandler(this.activeNode);
+                        else if (this.activeSwitchNode != null)
+                            NodeLeftClickHandler(this.activeSwitchNode);
+                        break;
+                    default:
+                        break;
+                }
+                this.activeNode = null;
+                this.activeSwitchNode = null;
             }
             else
-            {
                 nodeNonLeftMouseUpDelegate?.Invoke(e);
-            }
             RedrawTopology();
         }
 
         private void NodeMouseMoveHandler(object sender, MouseEventArgs e)
         {
-            if (clickAction == TpClickAction.MOVE_LOCATION)
-                if (translateNode)
+            if (translateNode && clickAction == TpClickAction.MOVE_LOCATION)
+            {
+                int toX = e.X - mouseLocDiffX, toY = e.Y - mouseLocDiffY;
+                bool inside = toX >= 0 & toY >= 0;
+                if (this.activeNode != null)
                 {
-                    int toX = e.X - mouseLocDiffX, toY = e.Y - mouseLocDiffY;
-                    bool inside = toX >= 0 & toY >= 0;
-                    inside = inside & (toX <= this.pBoxSize.Width - this.activeNode.endLoc.x + this.activeNode.startLoc.x & toY <= this.pBoxSize.Height - this.activeNode.endLoc.y + this.activeNode.startLoc.y);
+                    inside = inside & (toX <= this.canvasSize.Width - this.activeNode.endLoc.x + this.activeNode.startLoc.x & toY <= this.canvasSize.Height - this.activeNode.endLoc.y + this.activeNode.startLoc.y);
 
                     if (inside)
-                        this.activeNode.TranslateToLoc((short)(e.X - mouseLocDiffX), (short)(e.Y - mouseLocDiffY), this);
+                        this.activeNode.TranslateToLoc(
+                            newX: (short)(e.X - mouseLocDiffX),
+                            newY: (short)(e.Y - mouseLocDiffY),
+                            redrawVis: this
+                        );
                 }
+                else if (this.activeSwitchNode != null)
+                {
+                    inside = inside & toX <= this.canvasSize.Width - this.activeSwitchNode.endLoc.x + this.activeSwitchNode.startLoc.x & toY <= this.canvasSize.Height - this.activeSwitchNode.endLoc.y + this.activeSwitchNode.startLoc.y;
+                    if (inside)
+                        this.activeSwitchNode.TranslateToLoc(
+                            newX: (short)(e.X - mouseLocDiffX),
+                            newY: (short)(e.Y - mouseLocDiffY),
+                            redrawVis: this
+                        );
+                }
+            }
         }
 
         private void NodePreviewKeyDownHandler(object sender, PreviewKeyDownEventArgs e)
@@ -496,30 +721,30 @@ namespace SNMP_KERI
             }
             else return;
 
-            foreach (TopologyNode _node in nodes.Values)
-                if (_node.IsInLocation(cursorLoc.X, cursorLoc.Y))
+            TopologyNode _node = GetNodeAt(cursorLoc.X, cursorLoc.Y);
+            if (_node != null)
+            {
+                switch (e.KeyCode)
                 {
-                    switch (e.KeyCode)
-                    {
-                        case Keys.R: // Rotate action
-                            _node.Rotate();
-                            break;
-                        case Keys.V:
-                            _node.FlipVertically();
-                            break;
-                        case Keys.H:
-                            _node.FlipHorizontally();
-                            break;
-                        default:
-                            break;
-                    }
-                    RedrawTopology();
+                    case Keys.R: // Rotate action
+                        _node.Rotate();
+                        break;
+                    case Keys.V:
+                        _node.FlipVertically();
+                        break;
+                    case Keys.H:
+                        _node.FlipHorizontally();
+                        break;
+                    default:
+                        break;
                 }
+                RedrawTopology();
+            }
         }
 
-        private void NodeLeftClickHandler(TopologyNode node)
+        private void NodeLeftClickHandler(TopologyElement element)
         {
-            if (node == null)
+            if (element == null)
                 return;
 
             string input;
@@ -530,72 +755,135 @@ namespace SNMP_KERI
                 case TpClickAction.SET_CONNECTIONS:
                     break;
                 case TpClickAction.SET_NODE_TYPE:
-                    input = Interaction.InputBox("Please enter:\n-1 to unset node type\n0 for DANP\n1 for DANH\n2 for REDBOXP\n3 for REDBOXH\n4 for VDANH\n5 for VDANP", "Node type", "-1");
-                    int type;
-                    if (int.TryParse(input, out type))
-                        switch ((TopologyNode.TpNodeType)type)
-                        {
-                            case TopologyNode.TpNodeType.DANP:
-                                node.type = TopologyNode.TpNodeType.DANP;
-                                Log(node, "type", "DANP");
-                                break;
-                            case TopologyNode.TpNodeType.DANH:
-                                node.type = TopologyNode.TpNodeType.DANH;
-                                Log(node, "type", "DANH");
-                                break;
-                            case TopologyNode.TpNodeType.REDBOXP:
-                                node.type = TopologyNode.TpNodeType.REDBOXP;
-                                Log(node, "type", "REDBOXP");
-                                break;
-                            case TopologyNode.TpNodeType.REDBOXH:
-                                node.type = TopologyNode.TpNodeType.REDBOXH;
-                                Log(node, "type", "REDBOXH");
-                                break;
-                            case TopologyNode.TpNodeType.VDANH:
-                                node.type = TopologyNode.TpNodeType.VDANH;
-                                Log(node, "type", "VDANH");
-                                break;
-                            case TopologyNode.TpNodeType.VDANP:
-                                node.type = TopologyNode.TpNodeType.VDANP;
-                                Log(node, "type", "VDANP");
-                                break;
-                            default:
-                                node.type = TopologyNode.TpNodeType.DEFAULT;
-                                Log(node, "type", "UNSET");
-                                break;
-                        }
-                    else
-                        MessageBox.Show("Input is invalid, please read instructions more carefully!", "Invalid input", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    if (element is TopologyNode)
+                    {
+                        input = Interaction.InputBox("Please enter:\n-1 to unset node type\n0 for DANP\n1 for DANH\n2 for REDBOXP\n3 for REDBOXH\n4 for VDANH\n5 for VDANP", "Node type", "-1");
+                        int type;
+                        if (int.TryParse(input, out type))
+                            switch ((TopologyNode.TpNodeType)type)
+                            {
+                                case TopologyNode.TpNodeType.DANP:
+                                    (element as TopologyNode).type = TopologyNode.TpNodeType.DANP;
+                                    Log(element as TopologyNode, "type", "DANP");
+                                    break;
+                                case TopologyNode.TpNodeType.DANH:
+                                    (element as TopologyNode).type = TopologyNode.TpNodeType.DANH;
+                                    Log(element as TopologyNode, "type", "DANH");
+                                    break;
+                                case TopologyNode.TpNodeType.REDBOXP:
+                                    (element as TopologyNode).type = TopologyNode.TpNodeType.REDBOXP;
+                                    Log(element as TopologyNode, "type", "REDBOXP");
+                                    break;
+                                case TopologyNode.TpNodeType.REDBOXH:
+                                    (element as TopologyNode).type = TopologyNode.TpNodeType.REDBOXH;
+                                    Log(element as TopologyNode, "type", "REDBOXH");
+                                    break;
+                                case TopologyNode.TpNodeType.VDANH:
+                                    (element as TopologyNode).type = TopologyNode.TpNodeType.VDANH;
+                                    Log(element as TopologyNode, "type", "VDANH");
+                                    break;
+                                case TopologyNode.TpNodeType.VDANP:
+                                    (element as TopologyNode).type = TopologyNode.TpNodeType.VDANP;
+                                    Log(element as TopologyNode, "type", "VDANP");
+                                    break;
+                                default:
+                                    (element as TopologyNode).type = TopologyNode.TpNodeType.DEFAULT;
+                                    Log(element as TopologyNode, "type", "UNSET");
+                                    break;
+                            }
+                        else
+                            MessageBox.Show("Input is invalid, please read instructions more carefully!", "Invalid input", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                     break;
                 case TpClickAction.SET_NODE_IP:
-                    input = Interaction.InputBox("Please enter IP Address of the node\n(e.g. 192.168.43.4)", "Node IP Address", "");
-                    if (Regex.IsMatch(input, "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"))
+                    if (element is TopologyNode)
                     {
-                        node.ipAddress = IPAddress.Parse(input);
-                        Log(node, "IP address", node.ipAddress.ToString());
+                        input = Interaction.InputBox("Please enter IP Address of the node\n(e.g. 192.168.43.4)", "Node IP Address", "");
+                        if (Regex.IsMatch(input, "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"))
+                        {
+                            (element as TopologyNode).ipAddress = IPAddress.Parse(input);
+                            Log(element as TopologyNode, "IP address", (element as TopologyNode).ipAddress.ToString());
+                        }
+                        else
+                            MessageBox.Show("IP Address is invalid, please trin!", "Invalid IP Address", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
-                    else
-                        MessageBox.Show("IP Address is invalid, please trin!", "Invalid IP Address", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     break;
                 case TpClickAction.SET_NODE_MAC:
-                    input = Interaction.InputBox("Please enter Physical (MAC) Address of the node\n(e.g. 00-0a-95-9d-68-16)", "Node Physical (MAC) Address", "");
-                    if (Regex.IsMatch(input, "^([0-9A-Fa-f]{2}-){5}([0-9A-Fa-f]{2})$"))
+                    if (element is TopologyNode)
                     {
-                        node.phyAddress = PhysicalAddress.Parse(input.ToUpper());
-                        Log(node, "type", node.phyAddress.ToString());
+                        input = Interaction.InputBox("Please enter Physical (MAC) Address of the node\n(e.g. 00-0a-95-9d-68-16)", "Node Physical (MAC) Address", "");
+                        if (Regex.IsMatch(input, "^([0-9A-Fa-f]{2}-){5}([0-9A-Fa-f]{2})$"))
+                        {
+                            (element as TopologyNode).phyAddress = PhysicalAddress.Parse(input.ToUpper());
+                            Log(element as TopologyNode, "type", (element as TopologyNode).phyAddress.ToString());
+                        }
+                        else
+                            MessageBox.Show("Physical Address is invalid, please try again!", "Invalid Physical Address", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
-                    else
-                        MessageBox.Show("Physical Address is invalid, please try again!", "Invalid Physical Address", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     break;
                 default:
-                    MessageBox.Show(string.Format("Node {0} has been clicked!", node.id));
+                    if (element is TopologyNode)
+                        MessageBox.Show(string.Format("Node {0} has been clicked!", (element as TopologyNode).id));
                     break;
             }
         }
         #endregion
 
         #region Topology elements
-        internal class TopologyNode
+        internal abstract class TopologyElement
+        {
+            #region Variables
+            internal TopologyLoc startLoc; // start-location
+            internal TopologyLoc endLoc; // end-location
+            #endregion
+
+            internal TopologyElement(TopologyLoc startLoc, TopologyLoc endLoc)
+            {
+                this.startLoc = startLoc;
+                this.endLoc = endLoc;
+            }
+
+            internal virtual void TranslateToDelta(short deltaX, short deltaY, TopologyVisualizer redrawVis = null)
+            {
+                if (redrawVis != null && (this is TopologyNode || this is TopologySwitchNode))
+                    redrawVis.EraseNodeRect(this);
+
+                this.startLoc.x += deltaX;
+                this.startLoc.y += deltaY;
+                this.endLoc.x += deltaX;
+                this.endLoc.y += deltaY;
+
+                if (redrawVis != null)
+                    if (this is TopologyNode)
+                        redrawVis.DrawNodeRect(this as TopologyNode);
+                    else if (this is TopologySwitchNode)
+                        redrawVis.DrawSwitchNodeRect(this as TopologySwitchNode);
+            }
+
+            internal virtual void TranslateToLoc(short newX, short newY, TopologyVisualizer redrawVis = null)
+            {
+                if (redrawVis != null && (this is TopologyNode || this is TopologySwitchNode))
+                    redrawVis.EraseNodeRect(this);
+
+                this.endLoc.x += (short)(newX - this.startLoc.x);
+                this.endLoc.y += (short)(newY - this.startLoc.y);
+                this.startLoc.x = newX;
+                this.startLoc.y = newY;
+
+                if (redrawVis != null)
+                    if (this is TopologyNode)
+                        redrawVis.DrawNodeRect(this as TopologyNode);
+                    else if (this is TopologySwitchNode)
+                        redrawVis.DrawSwitchNodeRect(this as TopologySwitchNode);
+            }
+
+            internal bool IsInLocation(int x, int y)
+            {
+                return (startLoc.x <= x & x <= endLoc.x) && (startLoc.y <= y & y <= endLoc.y);
+            }
+        }
+
+        internal sealed class TopologyNode : TopologyElement
         {
             internal enum TpNodeType
             {
@@ -609,10 +897,12 @@ namespace SNMP_KERI
             }
 
             internal TopologyNode(short id, short posX, short posY, short w, short h, short topMargin, short rPortConnId = TopologyPort.DISCONNECTED, short lPortConnId = TopologyPort.DISCONNECTED, short tPortConnId = TopologyPort.DISCONNECTED)
+                : base(
+                      startLoc: new TopologyLoc(posX, posY),
+                      endLoc: new TopologyLoc((short)(posX + w), (short)(posY + h))
+                )
             {
                 this.id = id;
-                this.startLoc = new TopologyLoc(posX, posY);
-                this.endLoc = new TopologyLoc((short)(posX + w), (short)(posY + h));
 
                 // Calculate and set port locations
                 short pBoxW = NODE_WIDTH / 3;
@@ -646,20 +936,18 @@ namespace SNMP_KERI
             }
 
             internal TopologyNode(short id, TopologyLoc startLoc, TopologyLoc endLoc, TopologyPort tPort, TopologyPort rPort, TopologyPort lPort, TpNodeType type, short topMargin)
+                : base(startLoc: startLoc, endLoc: endLoc)
             {
-                setBody(id, startLoc, endLoc, tPort, rPort, lPort, type, topMargin);
+                SetBody(id, tPort, rPort, lPort, type, topMargin);
             }
 
-            internal TopologyNode()
-            {
+            internal TopologyNode(TopologyLoc startLoc, TopologyLoc endLoc)
+                : base(startLoc: startLoc, endLoc: endLoc)
+            { }
 
-            }
-
-            internal void setBody(short id, TopologyLoc startLoc, TopologyLoc endLoc, TopologyPort tPort, TopologyPort rPort, TopologyPort lPort, TpNodeType type, short topMargin)
+            internal void SetBody(short id, TopologyPort tPort, TopologyPort rPort, TopologyPort lPort, TpNodeType type, short topMargin)
             {
                 this.id = id;
-                this.startLoc = startLoc;
-                this.endLoc = endLoc;
 
                 this.portC = tPort;
                 this.portB = rPort;
@@ -679,8 +967,6 @@ namespace SNMP_KERI
 
             #region Variables
             internal short id; // incremental number
-            internal TopologyLoc startLoc; // start-location
-            internal TopologyLoc endLoc; // end-location
             internal TopologyLoc Center
             {
                 get
@@ -746,42 +1032,19 @@ namespace SNMP_KERI
                 this.portC.connPortId = tPortConnId;
             }
 
-            internal void TranslateToLoc(short newX, short newY, TopologyVisualizer redrawVis = null)
+            internal override void TranslateToDelta(short deltaX, short deltaY, TopologyVisualizer redrawVis = null)
+            {
+                this.portA.TranslateToDelta(deltaX, deltaY);
+                this.portB.TranslateToDelta(deltaX, deltaY);
+                this.portC.TranslateToDelta(deltaX, deltaY);
+                base.TranslateToDelta(deltaX, deltaY, redrawVis);
+            }
+
+            internal override void TranslateToLoc(short newX, short newY, TopologyVisualizer redrawVis = null)
             {
                 short deltaX = (short)(newX - this.startLoc.x);
                 short deltaY = (short)(newY - this.startLoc.y);
-
-                if (redrawVis != null)
-                {
-                    //redrawVis.canvas.DrawRectangle(Pens.White, this.startLoc.x, startLoc.y, this.endLoc.x - this.startLoc.x, this.endLoc.y - this.startLoc.y);
-                    redrawVis.EraseNodeRect(this);
-                }
-
-                this.startLoc.x = newX;
-                this.startLoc.y = newY;
-                this.endLoc.x += deltaX;
-                this.endLoc.y += deltaY;
-
-                this.portC.startLoc.x += deltaX;
-                this.portC.startLoc.y += deltaY;
-                this.portC.endLoc.x += deltaX;
-                this.portC.endLoc.y += deltaY;
-
-                this.portB.startLoc.x += deltaX;
-                this.portB.startLoc.y += deltaY;
-                this.portB.endLoc.x += deltaX;
-                this.portB.endLoc.y += deltaY;
-
-                this.portA.startLoc.x += deltaX;
-                this.portA.startLoc.y += deltaY;
-                this.portA.endLoc.x += deltaX;
-                this.portA.endLoc.y += deltaY;
-
-                if (redrawVis != null)
-                {
-                    //redrawVis.canvas.DrawRectangle(Pens.Red, this.startLoc.x, startLoc.y, this.endLoc.x - this.startLoc.x, this.endLoc.y - this.startLoc.y);
-                    redrawVis.DrawNodeRect(this);
-                }
+                this.TranslateToDelta(deltaX, deltaY, redrawVis);
             }
 
             internal void Rotate()
@@ -1263,11 +1526,6 @@ namespace SNMP_KERI
                 }
             }
 
-            internal bool IsInLocation(int x, int y)
-            {
-                return (startLoc.x <= x & x <= endLoc.x) && (startLoc.y <= y & y <= endLoc.y);
-            }
-
             public XElement ToXmlElement(string descr = "")
             {
                 XElement res = new XElement("TpNode", new XAttribute("descr", descr));
@@ -1306,14 +1564,15 @@ namespace SNMP_KERI
 
             public static TopologyNode ParseXml(XElement tpLocXml)
             {
-                TopologyNode res = new TopologyNode();
-
                 XNode node = tpLocXml.FirstNode;
                 short id = short.Parse(((XElement)node).Value);
                 node = node.NextNode;
                 TopologyLoc startLoc = TopologyLoc.ParseXml((XElement)node);
                 node = node.NextNode;
                 TopologyLoc endLoc = TopologyLoc.ParseXml((XElement)node);
+
+                TopologyNode res = new TopologyNode(startLoc, endLoc);
+
                 node = node.NextNode;
                 short topMargin = short.Parse(((XElement)node).Value);
                 node = node.NextNode;
@@ -1325,7 +1584,7 @@ namespace SNMP_KERI
                 node = node.NextNode;
                 TpNodeType type = (TpNodeType)int.Parse(((XElement)node).Value);
 
-                res.setBody(id, startLoc, endLoc, tPort, rPort, lPort, type, topMargin);
+                res.SetBody(id, tPort, rPort, lPort, type, topMargin);
 
                 node = node.NextNode;
                 string ipAddrString = ((XElement)node).Value;
@@ -1341,7 +1600,7 @@ namespace SNMP_KERI
             }
         }
 
-        internal class TopologyPort
+        internal class TopologyPort : TopologyElement
         {
             internal enum TpPortType
             {
@@ -1355,18 +1614,18 @@ namespace SNMP_KERI
             internal const short DISCONNECTED = -1;
             internal int tag = -1;
             internal TpPortType type;
-            internal TopologyLoc startLoc;
-            internal TopologyLoc endLoc;
             internal TopologyNode parent;
             internal Brush brush;
             internal short connPortId;
             internal TpPortType connPortType;
             internal bool connLinkDrawn;
+            internal bool multipleConnSupported;
             public short Width { get { return (short)(endLoc.x - startLoc.x); } }
             public short Height { get { return (short)(endLoc.y - startLoc.y); } }
             #endregion
 
-            internal TopologyPort(TpPortType type, TopologyLoc startLoc, TopologyLoc endLoc, TopologyNode parent, Brush brush = null)
+            internal TopologyPort(TpPortType type, TopologyLoc startLoc, TopologyLoc endLoc, TopologyNode parent, Brush brush = null, bool multipleConnSupported = false)
+                : base(startLoc: startLoc, endLoc: endLoc)
             {
                 this.type = type;
                 this.startLoc = startLoc;
@@ -1375,11 +1634,7 @@ namespace SNMP_KERI
                 this.connPortId = DISCONNECTED;
                 this.connPortType = TpPortType.NULL;
                 this.brush = brush ?? Brushes.Green;
-            }
-
-            internal bool IsInLocation(int x, int y)
-            {
-                return (startLoc.x <= x & x <= endLoc.x) && (startLoc.y <= y & y <= endLoc.y);
+                this.multipleConnSupported = multipleConnSupported;
             }
 
             internal TopologyLoc GetCenter()
@@ -1406,7 +1661,7 @@ namespace SNMP_KERI
                 }
             }
 
-            public XElement ToXmlElement(string descr = "")
+            internal virtual XElement ToXmlElement(string descr = "")
             {
                 XElement res = new XElement("TpPort", new XAttribute("descr", descr));
 
@@ -1428,7 +1683,7 @@ namespace SNMP_KERI
                 return res;
             }
 
-            public static TopologyPort ParseXml(TopologyNode parent, XElement tpLocXml)
+            internal static TopologyPort ParseXml(TopologyNode parent, XElement tpLocXml)
             {
                 XNode node = tpLocXml.FirstNode;
                 TpPortType type = (TpPortType)int.Parse(((XElement)node).Value);
@@ -1446,6 +1701,61 @@ namespace SNMP_KERI
                 res.connPortType = connPortType;
 
                 return res;
+            }
+        }
+
+        internal sealed class TopologySwitchNode : TopologyPort
+        {
+            #region Variables
+            internal readonly short id;
+            #endregion
+
+            internal TopologySwitchNode(short id, TopologyLoc startLoc, TopologyLoc endLoc)
+                : base(
+                      type: TpPortType.NULL,
+                      startLoc: startLoc,
+                      endLoc: endLoc,
+                      parent: null,
+                      brush: Brushes.SlateBlue,
+                      multipleConnSupported: true
+                )
+            {
+                this.id = id;
+            }
+
+            internal TopologySwitchNode(short id, short posX, short posY, short w, short h)
+                : base(
+                      type: TpPortType.NULL,
+                      startLoc: new TopologyLoc(posX, posY),
+                      endLoc: new TopologyLoc((short)(posX + w), (short)(posY + h)),
+                      parent: null,
+                      brush: Brushes.SlateBlue,
+                      multipleConnSupported: true
+                )
+            {
+                this.id = id;
+            }
+
+            internal override XElement ToXmlElement(string descr = "")
+            {
+                XElement res = base.ToXmlElement(descr);
+
+                res.Name = "TpSwitchNode";
+                XElement idElement = new XElement("id");
+                idElement.Value = this.id.ToString();
+                res.Add(idElement);
+
+                return res;
+            }
+
+            internal static TopologySwitchNode ParseXml(XElement tpSwitchNodeXml)
+            {
+                TopologyPort portVersion = ParseXml(null, tpSwitchNodeXml);
+
+                XNode idNode = tpSwitchNodeXml.LastNode;
+                short id = short.Parse(((XElement)idNode).Value);
+
+                return new TopologySwitchNode(id, portVersion.startLoc, portVersion.endLoc);
             }
         }
 
@@ -1468,6 +1778,11 @@ namespace SNMP_KERI
             public static explicit operator Point(TopologyLoc loc)
             {
                 return new Point(loc.x, loc.y);
+            }
+
+            public bool Is(short x, short y)
+            {
+                return this.x == x && this.y == y;
             }
 
             public XElement ToXmlElement(string descr = "")
@@ -1500,9 +1815,16 @@ namespace SNMP_KERI
 
         internal void ExportNodeXmls(string xmlFilePath, string timestamp = "")
         {
-            XElement root = new XElement("TpNodes", new XAttribute("timestamp", timestamp));
+            XElement switchesXml = new XElement("TpSwitches");
+            foreach (TopologySwitchNode switchNode in switchNodes.Values)
+                switchesXml.Add(switchNode.ToXmlElement(string.Format("Switch {0}", switchNode.id)));
+            XElement nodesXml = new XElement("TpNodes");
             foreach (TopologyNode node in nodes.Values)
-                root.Add(node.ToXmlElement(string.Format("Node {0}", node.id)));
+                nodesXml.Add(node.ToXmlElement(string.Format("Node {0}", node.id)));
+
+            XElement root = new XElement("TPElements", new XAttribute("timestamp", timestamp));
+            root.Add(switchesXml);
+            root.Add(nodesXml);
             using (StreamWriter file = new StreamWriter(xmlFilePath, false))
                 file.WriteLine(root.ToString());
         }
@@ -1512,10 +1834,18 @@ namespace SNMP_KERI
             nodes.Clear();
 
             XElement root = XElement.Load(xmlFilePath);
+            IEnumerator<XNode> enumerator = root.Nodes().GetEnumerator();
 
-            foreach (XNode xNode in root.Nodes())
+            enumerator.MoveNext();
+            foreach (XNode switchesXml in (enumerator.Current as XElement).Nodes())
             {
-                TopologyNode tpNode = TopologyNode.ParseXml((XElement)xNode);
+                TopologySwitchNode switchNode = TopologySwitchNode.ParseXml((XElement)switchesXml);
+                switchNodes.Add(switchNode.id, switchNode);
+            }
+            enumerator.MoveNext();
+            foreach (XNode nodesXml in (enumerator.Current as XElement).Nodes())
+            {
+                TopologyNode tpNode = TopologyNode.ParseXml((XElement)nodesXml);
                 nodes.Add(tpNode.id, tpNode);
             }
         }
