@@ -104,21 +104,21 @@
             // loadConfigurationToolStripMenuItem
             // 
             this.loadConfigurationToolStripMenuItem.Name = "loadConfigurationToolStripMenuItem";
-            this.loadConfigurationToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.loadConfigurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.loadConfigurationToolStripMenuItem.Text = "Load existing";
             this.loadConfigurationToolStripMenuItem.Click += new System.EventHandler(this.LoadConfigurationToolStripMenuItem_Click);
             // 
             // newConfigurationToolStripMenuItem
             // 
             this.newConfigurationToolStripMenuItem.Name = "newConfigurationToolStripMenuItem";
-            this.newConfigurationToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.newConfigurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.newConfigurationToolStripMenuItem.Text = "Create new";
             this.newConfigurationToolStripMenuItem.Click += new System.EventHandler(this.NewConfigurationToolStripMenuItem_Click);
             // 
             // editConfigurationToolStripMenuItem
             // 
             this.editConfigurationToolStripMenuItem.Name = "editConfigurationToolStripMenuItem";
-            this.editConfigurationToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.editConfigurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.editConfigurationToolStripMenuItem.Text = "Edit existing";
             this.editConfigurationToolStripMenuItem.Click += new System.EventHandler(this.EditConfigurationToolStripMenuItem_Click);
             // 
@@ -213,7 +213,7 @@
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(138, 20);
-            this.aboutToolStripMenuItem.Text = "About SNMP KERI v1.3";
+            this.aboutToolStripMenuItem.Text = "About SNMP KERI";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
             // 
             // logWindowContextMenuStrip

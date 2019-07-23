@@ -1832,6 +1832,7 @@ namespace SNMP_KERI
         internal void ImportNodeXmls(string xmlFilePath)
         {
             nodes.Clear();
+            switchNodes.Clear();
 
             XElement root = XElement.Load(xmlFilePath);
             IEnumerator<XNode> enumerator = root.Nodes().GetEnumerator();
