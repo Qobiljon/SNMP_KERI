@@ -348,6 +348,15 @@ namespace SNMP_KERI
 
             if (File.Exists(filePath))
             {
+                try
+                {
+                    lock (Tools.eventLogsWriter)
+                        Tools.eventLogsWriter.Flush();
+                }
+                catch
+                {
+
+                }
                 File.Copy(filePath, tmpFilePath, true);
                 Process.Start("notepad.exe", tmpFilePath);
             }
@@ -367,6 +376,15 @@ namespace SNMP_KERI
 
             if (File.Exists(filePath))
             {
+                try
+                {
+                    lock (Tools.snmpDataWriter)
+                        Tools.snmpDataWriter.Flush();
+                }
+                catch
+                {
+
+                }
                 File.Copy(filePath, tmpFilePath, true);
                 Process.Start("notepad.exe", tmpFilePath);
             }
@@ -402,9 +420,9 @@ namespace SNMP_KERI
                 MessageBox.Show(this, "SNMP erase operation has been canceled!", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Hand);
         }
 
-        private void TransferFocusToPictureBox(object sender, EventArgs e)
+        private void logTextBox_TextChanged(object sender, EventArgs e)
         {
-            topologyPictureBox.Focus();
+            logTextBox.Select(logTextBox.TextLength, 0);
         }
     }
 }

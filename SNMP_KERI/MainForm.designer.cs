@@ -85,11 +85,9 @@
             this.aboutToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Padding = new System.Windows.Forms.Padding(7, 2, 0, 2);
-            this.menuStrip1.Size = new System.Drawing.Size(1457, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1161, 24);
             this.menuStrip1.TabIndex = 3;
             this.menuStrip1.Text = "menuStrip1";
-            this.menuStrip1.Enter += new System.EventHandler(this.TransferFocusToPictureBox);
             // 
             // configurationToolStripMenuItem
             // 
@@ -104,21 +102,21 @@
             // loadConfigurationToolStripMenuItem
             // 
             this.loadConfigurationToolStripMenuItem.Name = "loadConfigurationToolStripMenuItem";
-            this.loadConfigurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.loadConfigurationToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
             this.loadConfigurationToolStripMenuItem.Text = "Load existing";
             this.loadConfigurationToolStripMenuItem.Click += new System.EventHandler(this.LoadConfigurationToolStripMenuItem_Click);
             // 
             // newConfigurationToolStripMenuItem
             // 
             this.newConfigurationToolStripMenuItem.Name = "newConfigurationToolStripMenuItem";
-            this.newConfigurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newConfigurationToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
             this.newConfigurationToolStripMenuItem.Text = "Create new";
             this.newConfigurationToolStripMenuItem.Click += new System.EventHandler(this.NewConfigurationToolStripMenuItem_Click);
             // 
             // editConfigurationToolStripMenuItem
             // 
             this.editConfigurationToolStripMenuItem.Name = "editConfigurationToolStripMenuItem";
-            this.editConfigurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editConfigurationToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
             this.editConfigurationToolStripMenuItem.Text = "Edit existing";
             this.editConfigurationToolStripMenuItem.Click += new System.EventHandler(this.EditConfigurationToolStripMenuItem_Click);
             // 
@@ -212,7 +210,7 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(138, 20);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(114, 20);
             this.aboutToolStripMenuItem.Text = "About SNMP KERI";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
             // 
@@ -250,27 +248,26 @@
             this.hoverPanel.Controls.Add(this.hoverLabelPortA);
             this.hoverPanel.Controls.Add(this.hoverLabelMacAddress);
             this.hoverPanel.Controls.Add(this.hoverLabelIpAddress);
-            this.hoverPanel.Location = new System.Drawing.Point(719, 12);
+            this.hoverPanel.Location = new System.Drawing.Point(616, 13);
             this.hoverPanel.Name = "hoverPanel";
-            this.hoverPanel.Size = new System.Drawing.Size(156, 148);
+            this.hoverPanel.Size = new System.Drawing.Size(134, 160);
             this.hoverPanel.TabIndex = 17;
-            this.hoverPanel.Enter += new System.EventHandler(this.TransferFocusToPictureBox);
             // 
             // hoverLabelLre
             // 
             this.hoverLabelLre.AutoSize = true;
-            this.hoverLabelLre.Location = new System.Drawing.Point(3, 126);
+            this.hoverLabelLre.Location = new System.Drawing.Point(3, 137);
             this.hoverLabelLre.Name = "hoverLabelLre";
-            this.hoverLabelLre.Size = new System.Drawing.Size(28, 12);
+            this.hoverLabelLre.Size = new System.Drawing.Size(28, 13);
             this.hoverLabelLre.TabIndex = 0;
             this.hoverLabelLre.Text = "LRE";
             // 
             // hoverLabelMib
             // 
             this.hoverLabelMib.AutoSize = true;
-            this.hoverLabelMib.Location = new System.Drawing.Point(3, 106);
+            this.hoverLabelMib.Location = new System.Drawing.Point(3, 115);
             this.hoverLabelMib.Name = "hoverLabelMib";
-            this.hoverLabelMib.Size = new System.Drawing.Size(27, 12);
+            this.hoverLabelMib.Size = new System.Drawing.Size(26, 13);
             this.hoverLabelMib.TabIndex = 0;
             this.hoverLabelMib.Text = "MIB";
             // 
@@ -278,9 +275,9 @@
             // 
             this.hoverLabelPortC.AutoSize = true;
             this.hoverLabelPortC.ForeColor = System.Drawing.Color.DarkGreen;
-            this.hoverLabelPortC.Location = new System.Drawing.Point(3, 87);
+            this.hoverLabelPortC.Location = new System.Drawing.Point(3, 94);
             this.hoverLabelPortC.Name = "hoverLabelPortC";
-            this.hoverLabelPortC.Size = new System.Drawing.Size(53, 12);
+            this.hoverLabelPortC.Size = new System.Drawing.Size(50, 13);
             this.hoverLabelPortC.TabIndex = 0;
             this.hoverLabelPortC.Text = "PORT_C";
             // 
@@ -288,9 +285,9 @@
             // 
             this.hoverLabelPortB.AutoSize = true;
             this.hoverLabelPortB.ForeColor = System.Drawing.Color.DarkGreen;
-            this.hoverLabelPortB.Location = new System.Drawing.Point(3, 67);
+            this.hoverLabelPortB.Location = new System.Drawing.Point(3, 73);
             this.hoverLabelPortB.Name = "hoverLabelPortB";
-            this.hoverLabelPortB.Size = new System.Drawing.Size(52, 12);
+            this.hoverLabelPortB.Size = new System.Drawing.Size(50, 13);
             this.hoverLabelPortB.TabIndex = 0;
             this.hoverLabelPortB.Text = "PORT_B";
             // 
@@ -298,27 +295,27 @@
             // 
             this.hoverLabelPortA.AutoSize = true;
             this.hoverLabelPortA.ForeColor = System.Drawing.Color.DarkGreen;
-            this.hoverLabelPortA.Location = new System.Drawing.Point(3, 48);
+            this.hoverLabelPortA.Location = new System.Drawing.Point(3, 52);
             this.hoverLabelPortA.Name = "hoverLabelPortA";
-            this.hoverLabelPortA.Size = new System.Drawing.Size(52, 12);
+            this.hoverLabelPortA.Size = new System.Drawing.Size(50, 13);
             this.hoverLabelPortA.TabIndex = 0;
             this.hoverLabelPortA.Text = "PORT_A";
             // 
             // hoverLabelMacAddress
             // 
             this.hoverLabelMacAddress.AutoSize = true;
-            this.hoverLabelMacAddress.Location = new System.Drawing.Point(3, 29);
+            this.hoverLabelMacAddress.Location = new System.Drawing.Point(3, 31);
             this.hoverLabelMacAddress.Name = "hoverLabelMacAddress";
-            this.hoverLabelMacAddress.Size = new System.Drawing.Size(59, 12);
+            this.hoverLabelMacAddress.Size = new System.Drawing.Size(57, 13);
             this.hoverLabelMacAddress.TabIndex = 0;
             this.hoverLabelMacAddress.Text = "MAC: ###";
             // 
             // hoverLabelIpAddress
             // 
             this.hoverLabelIpAddress.AutoSize = true;
-            this.hoverLabelIpAddress.Location = new System.Drawing.Point(3, 9);
+            this.hoverLabelIpAddress.Location = new System.Drawing.Point(3, 10);
             this.hoverLabelIpAddress.Name = "hoverLabelIpAddress";
-            this.hoverLabelIpAddress.Size = new System.Drawing.Size(42, 12);
+            this.hoverLabelIpAddress.Size = new System.Drawing.Size(44, 13);
             this.hoverLabelIpAddress.TabIndex = 0;
             this.hoverLabelIpAddress.Text = "IP: ###";
             // 
@@ -328,23 +325,21 @@
             this.panel1.Controls.Add(this.warningsCheckBox);
             this.panel1.Controls.Add(this.errorsCheckBox);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 457);
+            this.panel1.Location = new System.Drawing.Point(0, 495);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1457, 35);
+            this.panel1.Size = new System.Drawing.Size(1161, 38);
             this.panel1.TabIndex = 19;
-            this.panel1.Enter += new System.EventHandler(this.TransferFocusToPictureBox);
             // 
             // label1
             // 
             this.label1.Dock = System.Windows.Forms.DockStyle.Right;
             this.label1.Font = new System.Drawing.Font("Gulim", 12F);
-            this.label1.Location = new System.Drawing.Point(1124, 0);
+            this.label1.Location = new System.Drawing.Point(857, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(152, 35);
+            this.label1.Size = new System.Drawing.Size(130, 38);
             this.label1.TabIndex = 4;
             this.label1.Text = "LOGS FILTER:";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.label1.Enter += new System.EventHandler(this.TransferFocusToPictureBox);
             // 
             // warningsCheckBox
             // 
@@ -352,14 +347,13 @@
             this.warningsCheckBox.Checked = true;
             this.warningsCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.warningsCheckBox.Dock = System.Windows.Forms.DockStyle.Right;
-            this.warningsCheckBox.Location = new System.Drawing.Point(1276, 0);
+            this.warningsCheckBox.Location = new System.Drawing.Point(987, 0);
             this.warningsCheckBox.Name = "warningsCheckBox";
-            this.warningsCheckBox.Padding = new System.Windows.Forms.Padding(5);
-            this.warningsCheckBox.Size = new System.Drawing.Size(98, 35);
+            this.warningsCheckBox.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.warningsCheckBox.Size = new System.Drawing.Size(94, 38);
             this.warningsCheckBox.TabIndex = 3;
             this.warningsCheckBox.Text = "WARNINGS";
             this.warningsCheckBox.UseVisualStyleBackColor = true;
-            this.warningsCheckBox.Enter += new System.EventHandler(this.TransferFocusToPictureBox);
             // 
             // errorsCheckBox
             // 
@@ -367,14 +361,13 @@
             this.errorsCheckBox.Checked = true;
             this.errorsCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.errorsCheckBox.Dock = System.Windows.Forms.DockStyle.Right;
-            this.errorsCheckBox.Location = new System.Drawing.Point(1374, 0);
+            this.errorsCheckBox.Location = new System.Drawing.Point(1081, 0);
             this.errorsCheckBox.Name = "errorsCheckBox";
-            this.errorsCheckBox.Padding = new System.Windows.Forms.Padding(5);
-            this.errorsCheckBox.Size = new System.Drawing.Size(83, 35);
+            this.errorsCheckBox.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.errorsCheckBox.Size = new System.Drawing.Size(80, 38);
             this.errorsCheckBox.TabIndex = 1;
             this.errorsCheckBox.Text = "ERRORS";
             this.errorsCheckBox.UseVisualStyleBackColor = true;
-            this.errorsCheckBox.Enter += new System.EventHandler(this.TransferFocusToPictureBox);
             // 
             // splitContainer1
             // 
@@ -389,9 +382,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.logTextBox);
-            this.splitContainer1.Size = new System.Drawing.Size(1457, 433);
-            this.splitContainer1.SplitterDistance = 771;
-            this.splitContainer1.SplitterWidth = 5;
+            this.splitContainer1.Size = new System.Drawing.Size(1161, 471);
+            this.splitContainer1.SplitterDistance = 614;
             this.splitContainer1.TabIndex = 20;
             // 
             // topologyPictureBox
@@ -400,7 +392,7 @@
             this.topologyPictureBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.topologyPictureBox.Location = new System.Drawing.Point(0, 0);
             this.topologyPictureBox.Name = "topologyPictureBox";
-            this.topologyPictureBox.Size = new System.Drawing.Size(771, 433);
+            this.topologyPictureBox.Size = new System.Drawing.Size(614, 471);
             this.topologyPictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.topologyPictureBox.TabIndex = 2;
             this.topologyPictureBox.TabStop = false;
@@ -416,16 +408,16 @@
             this.logTextBox.Location = new System.Drawing.Point(0, 0);
             this.logTextBox.Name = "logTextBox";
             this.logTextBox.ReadOnly = true;
-            this.logTextBox.Size = new System.Drawing.Size(681, 433);
+            this.logTextBox.Size = new System.Drawing.Size(543, 471);
             this.logTextBox.TabIndex = 15;
             this.logTextBox.Text = "";
-            this.logTextBox.Enter += new System.EventHandler(this.TransferFocusToPictureBox);
+            this.logTextBox.TextChanged += new System.EventHandler(this.logTextBox_TextChanged);
             // 
             // MainForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1457, 492);
+            this.ClientSize = new System.Drawing.Size(1161, 533);
             this.Controls.Add(this.hoverPanel);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.panel1);

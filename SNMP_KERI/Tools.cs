@@ -1,18 +1,18 @@
-﻿using System;
-using System.Net;
-using System.Threading;
-using Lextm.SharpSnmpLib;
-using System.Collections.Generic;
+﻿using System.Net.NetworkInformation;
 using Lextm.SharpSnmpLib.Messaging;
+using System.Collections.Generic;
+using Lextm.SharpSnmpLib;
+using System.Threading;
 using System.Drawing;
-using System.Net.NetworkInformation;
-using System.IO;
 using System.Text;
-
+using System.Net;
+using System.IO;
+using System;
+using System.Globalization;
 
 namespace SNMP_KERI
 {
-    class Tools
+    static class Tools
     {
         internal static void Init(TopologyVisualizer visualizer)
         {
@@ -37,8 +37,8 @@ namespace SNMP_KERI
 
         #region Variables
         internal static string openLogStreamStamp;
-        private static StreamWriter eventLogsWriter;
-        private static StreamWriter snmpDataWriter;
+        internal static StreamWriter eventLogsWriter;
+        internal static StreamWriter snmpDataWriter;
         private static TopologyVisualizer vis;
         private static Thread masterThread;
         private static Dictionary<IPAddress, Thread> channels;
@@ -80,10 +80,14 @@ namespace SNMP_KERI
                     thread?.Abort();
             channels.Clear();
 
-            snmpDataWriter.Flush();
-            snmpDataWriter.Close();
-            eventLogsWriter.Flush();
-            eventLogsWriter.Close();
+            lock (eventLogsWriter)
+                lock (snmpDataWriter)
+                {
+                    snmpDataWriter.Flush();
+                    snmpDataWriter.Close();
+                    eventLogsWriter.Flush();
+                    eventLogsWriter.Close();
+                }
 
             logDeleg(message: "SNMP service has been stopped");
 
@@ -172,7 +176,8 @@ namespace SNMP_KERI
                                 lreCntOwnRxA.Reset();
                                 lreCntOwnRxB.Reset();
 
-                                eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tSNMP_REPLY_TIMEOUT\tERROR");
+                                lock (eventLogsWriter)
+                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tSNMP_REPLY_TIMEOUT\tERROR");
                                 logDeleg(node.id, node.ipAddress, "snmp reply timeout", Color.Red);
                                 continue;
                             }
@@ -183,132 +188,144 @@ namespace SNMP_KERI
                             #endregion
 
                             // load the new SNMP value
-                            StringBuilder sb = new StringBuilder($"{DateTime.Now.ToString()},{node.ipAddress.ToString()}");
+                            StringBuilder sb = new StringBuilder($"{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture)},{node.ipAddress.ToString()}");
                             foreach (Variable elem in result)
                             {
                                 snmpIdValueMap[elem.Id].LoadNewValue(int.Parse(elem.Data.ToString()));
                                 sb.Append($",{snmpIdValueMap[elem.Id].NewValue}");
                             }
-                            snmpDataWriter.WriteLine(sb.ToString());
+                            lock (snmpDataWriter)
+                                snmpDataWriter.WriteLine(sb.ToString());
 
-                            lock (eventLogsWriter)
+                            #region Triggers: warnings and errors on portA
+                            if (lreLinkStatusA.NewValue == 2)
                             {
-                                #region Triggers: warnings and errors on portA
-                                if (lreLinkStatusA.NewValue == 2)
-                                {
-                                    node.portA.brush = Brushes.Red;
+                                node.portA.brush = Brushes.Red;
+                                lock (eventLogsWriter)
                                     eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLreLinkStatusA\tISEQUAL 2\tERROR");
-                                    logDeleg(node.id, node.ipAddress, "LreLinkStatusA ISEQUAL 2", Color.Red);
-                                }
-                                else if (lrePortAdminStateA.NewValue == 1)
-                                {
-                                    node.portA.brush = Brushes.Red;
-                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLrePortAdminStateA\tISEQUAL 1\tERROR");
-                                    logDeleg(node.id, node.ipAddress, "LrePortAdminStateA ISEQUAL 1", Color.Red);
-                                }
-                                else if (lreCntRxA.Unchanged)
-                                    if (lreCntRxA.UnchangedCounter > 5)
-                                    {
-                                        node.portA.brush = Brushes.DarkRed;
-                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLreCntRxA\tNO INCREASE\tERROR");
-                                        logDeleg(node.id, node.ipAddress, $"LreCntRxA={lreCntRxA.NewValue}, NO INCREASE {lreCntRxA.UnchangedCounter} TIMES", Color.Red);
-                                    }
-                                    else
-                                    {
-                                        node.portA.brush = Brushes.Orange;
-                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLreCntRxA\tNO INCREASE\tWARNING");
-                                        logDeleg(node.id, node.ipAddress, $"LreCntRxA={lreCntRxA.NewValue}, NO INCREASE {lreCntRxA.UnchangedCounter} TIMES", Color.DarkOrange);
-                                    }
-                                else
-                                    node.portA.brush = Brushes.Green;
-                                #endregion
-
-                                #region Triggers: warnings and errors on portB
-                                if (lreLinkStatusB.NewValue == 2)
-                                {
-                                    node.portB.brush = Brushes.Red;
-                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLreLinkStatusB\tISEQUAL 2\tERROR");
-                                    logDeleg(node.id, node.ipAddress, "LreLinkStatusB ISEQUAL 2", Color.Red);
-                                }
-                                else if (lrePortAdminStateB.NewValue == 1)
-                                {
-                                    node.portB.brush = Brushes.Red;
-                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLrePortAdminStateB\tISEQUAL 1\tERROR");
-                                    logDeleg(node.id, node.ipAddress, "LrePortAdminStateB ISEQUAL 1", Color.Red);
-                                }
-                                else if (lreCntRxB.Unchanged)
-                                    if (lreCntRxB.UnchangedCounter > 5)
-                                    {
-                                        node.portB.brush = Brushes.DarkRed;
-                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLreCntRxB\tNO INCREASE\tERROR");
-                                        logDeleg(node.id, node.ipAddress, $"LreCntRxB={lreCntRxB.NewValue}, NO INCREASE {lreCntRxB.UnchangedCounter} TIMES", Color.Red);
-                                    }
-                                    else
-                                    {
-                                        node.portB.brush = Brushes.Orange;
-                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLreCntRxB\tNO INCREASE\tWARNING");
-                                        logDeleg(node.id, node.ipAddress, $"LreCntRxB={lreCntRxB.NewValue}, NO INCREASE {lreCntRxB.UnchangedCounter} TIMES", Color.DarkOrange);
-                                    }
-                                else
-                                    node.portB.brush = Brushes.Green;
-                                #endregion
-
-                                #region Triggers: warnings and errors on portC
-                                if (lreCntRxC.Unchanged)
-                                {
-                                    string cPortNaming = "C";
-                                    if (node.type == TopologyVisualizer.TopologyNode.TpNodeType.REDBOXP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.REDBOXH)
-                                        cPortNaming = "IL";
-                                    else if (node.type == TopologyVisualizer.TopologyNode.TpNodeType.DANP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.DANH || node.type == TopologyVisualizer.TopologyNode.TpNodeType.VDANP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.VDANH)
-                                        cPortNaming = "APP";
-                                    if (lreCntRxC.UnchangedCounter > 5)
-                                    {
-                                        node.portC.brush = Brushes.DarkRed;
-                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\t{cPortNaming}\tLreCntRxC\tNO INCREASE\tERROR");
-                                        logDeleg(node.id, node.ipAddress, $"LreCntRxC={lreCntRxC.NewValue}, NO INCREASE {lreCntRxC.UnchangedCounter} TIMES", Color.Red);
-                                    }
-                                    else
-                                    {
-                                        node.portC.brush = Brushes.Orange;
-                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\t{cPortNaming}\tLreCntRxC\tNO INCREASE\tWARNING");
-                                        logDeleg(node.id, node.ipAddress, $"LreCntRxC={lreCntRxC.NewValue}, NO INCREASE {lreCntRxC.UnchangedCounter} TIMES", Color.DarkOrange);
-                                    }
-                                }
-                                else
-                                    node.portC.brush = Brushes.Green;
-                                #endregion
-
-                                #region Triggers: errors on MIB
-                                bool mibError = false;
-                                if (lreLinkStatusA.NewValue != 1 && lreLinkStatusA.NewValue != 2)
-                                {
-                                    node.mibBrush = Brushes.Red;
-                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLreLinkStatusA\tMIB\tERROR");
-                                    mibError = true;
-                                }
-                                if (lreLinkStatusB.NewValue != 1 && lreLinkStatusB.NewValue != 2)
-                                {
-                                    node.mibBrush = Brushes.Red;
-                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLreLinkStatusB\tMIB\tERROR");
-                                    mibError = true;
-                                }
-                                if (lrePortAdminStateA.NewValue != 1 && lrePortAdminStateA.NewValue != 2)
-                                {
-                                    node.mibBrush = Brushes.Red;
-                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLrePortAdminStateA\tMIB\tERROR");
-                                    mibError = true;
-                                }
-                                if (lrePortAdminStateB.NewValue != 1 && lrePortAdminStateB.NewValue != 2)
-                                {
-                                    node.mibBrush = Brushes.Red;
-                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLrePortAdminStateB\tMIB\tERROR");
-                                    mibError = true;
-                                }
-                                if (!mibError)
-                                    node.mibBrush = Brushes.Black;
-
-                                #endregion
+                                logDeleg(node.id, node.ipAddress, "LreLinkStatusA ISEQUAL 2", Color.Red);
                             }
+                            else if (lrePortAdminStateA.NewValue == 1)
+                            {
+                                node.portA.brush = Brushes.Red;
+                                lock (eventLogsWriter)
+                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLrePortAdminStateA\tISEQUAL 1\tERROR");
+                                logDeleg(node.id, node.ipAddress, "LrePortAdminStateA ISEQUAL 1", Color.Red);
+                            }
+                            else if (lreCntRxA.Unchanged)
+                                if (lreCntRxA.UnchangedCounter > 5)
+                                {
+                                    node.portA.brush = Brushes.DarkRed;
+                                    lock (eventLogsWriter)
+                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLreCntRxA\tNO INCREASE\tERROR");
+                                    logDeleg(node.id, node.ipAddress, $"LreCntRxA={lreCntRxA.NewValue}, NO INCREASE {lreCntRxA.UnchangedCounter} TIMES", Color.Red);
+                                }
+                                else
+                                {
+                                    node.portA.brush = Brushes.Orange;
+                                    lock (eventLogsWriter)
+                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLreCntRxA\tNO INCREASE\tWARNING");
+                                    logDeleg(node.id, node.ipAddress, $"LreCntRxA={lreCntRxA.NewValue}, NO INCREASE {lreCntRxA.UnchangedCounter} TIMES", Color.DarkOrange);
+                                }
+                            else
+                                node.portA.brush = Brushes.Green;
+                            #endregion
+
+                            #region Triggers: warnings and errors on portB
+                            if (lreLinkStatusB.NewValue == 2)
+                            {
+                                node.portB.brush = Brushes.Red;
+                                lock (eventLogsWriter)
+                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLreLinkStatusB\tISEQUAL 2\tERROR");
+                                logDeleg(node.id, node.ipAddress, "LreLinkStatusB ISEQUAL 2", Color.Red);
+                            }
+                            else if (lrePortAdminStateB.NewValue == 1)
+                            {
+                                node.portB.brush = Brushes.Red;
+                                lock (eventLogsWriter)
+                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLrePortAdminStateB\tISEQUAL 1\tERROR");
+                                logDeleg(node.id, node.ipAddress, "LrePortAdminStateB ISEQUAL 1", Color.Red);
+                            }
+                            else if (lreCntRxB.Unchanged)
+                                if (lreCntRxB.UnchangedCounter > 5)
+                                {
+                                    node.portB.brush = Brushes.DarkRed;
+                                    lock (eventLogsWriter)
+                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLreCntRxB\tNO INCREASE\tERROR");
+                                    logDeleg(node.id, node.ipAddress, $"LreCntRxB={lreCntRxB.NewValue}, NO INCREASE {lreCntRxB.UnchangedCounter} TIMES", Color.Red);
+                                }
+                                else
+                                {
+                                    node.portB.brush = Brushes.Orange;
+                                    lock (eventLogsWriter)
+                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLreCntRxB\tNO INCREASE\tWARNING");
+                                    logDeleg(node.id, node.ipAddress, $"LreCntRxB={lreCntRxB.NewValue}, NO INCREASE {lreCntRxB.UnchangedCounter} TIMES", Color.DarkOrange);
+                                }
+                            else
+                                node.portB.brush = Brushes.Green;
+                            #endregion
+
+                            #region Triggers: warnings and errors on portC
+                            if (lreCntRxC.Unchanged)
+                            {
+                                string cPortNaming = "C";
+                                if (node.type == TopologyVisualizer.TopologyNode.TpNodeType.REDBOXP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.REDBOXH)
+                                    cPortNaming = "IL";
+                                else if (node.type == TopologyVisualizer.TopologyNode.TpNodeType.DANP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.DANH || node.type == TopologyVisualizer.TopologyNode.TpNodeType.VDANP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.VDANH)
+                                    cPortNaming = "APP";
+                                if (lreCntRxC.UnchangedCounter > 5)
+                                {
+                                    node.portC.brush = Brushes.DarkRed;
+                                    lock (eventLogsWriter)
+                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\t{cPortNaming}\tLreCntRxC\tNO INCREASE\tERROR");
+                                    logDeleg(node.id, node.ipAddress, $"LreCntRxC={lreCntRxC.NewValue}, NO INCREASE {lreCntRxC.UnchangedCounter} TIMES", Color.Red);
+                                }
+                                else
+                                {
+                                    node.portC.brush = Brushes.Orange;
+                                    lock (eventLogsWriter)
+                                        eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\t{cPortNaming}\tLreCntRxC\tNO INCREASE\tWARNING");
+                                    logDeleg(node.id, node.ipAddress, $"LreCntRxC={lreCntRxC.NewValue}, NO INCREASE {lreCntRxC.UnchangedCounter} TIMES", Color.DarkOrange);
+                                }
+                            }
+                            else
+                                node.portC.brush = Brushes.Green;
+                            #endregion
+
+                            #region Triggers: errors on MIB
+                            bool mibError = false;
+                            if (lreLinkStatusA.NewValue != 1 && lreLinkStatusA.NewValue != 2)
+                            {
+                                node.mibBrush = Brushes.Red;
+                                lock (eventLogsWriter)
+                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLreLinkStatusA\tMIB\tERROR");
+                                mibError = true;
+                            }
+                            if (lreLinkStatusB.NewValue != 1 && lreLinkStatusB.NewValue != 2)
+                            {
+                                node.mibBrush = Brushes.Red;
+                                lock (eventLogsWriter)
+                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLreLinkStatusB\tMIB\tERROR");
+                                mibError = true;
+                            }
+                            if (lrePortAdminStateA.NewValue != 1 && lrePortAdminStateA.NewValue != 2)
+                            {
+                                node.mibBrush = Brushes.Red;
+                                lock (eventLogsWriter)
+                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tA\tLrePortAdminStateA\tMIB\tERROR");
+                                mibError = true;
+                            }
+                            if (lrePortAdminStateB.NewValue != 1 && lrePortAdminStateB.NewValue != 2)
+                            {
+                                node.mibBrush = Brushes.Red;
+                                lock (eventLogsWriter)
+                                    eventLogsWriter.WriteLine($"{DateTime.Now.ToString()}\t{node.ipAddress.ToString()}\tB\tLrePortAdminStateB\tMIB\tERROR");
+                                mibError = true;
+                            }
+                            if (!mibError)
+                                node.mibBrush = Brushes.Black;
+
+                            #endregion
                         }
                     });
                     channels[node.ipAddress].Name = $"Thread for handling user: {node.ipAddress.ToString()}";
@@ -324,11 +341,7 @@ namespace SNMP_KERI
             {
                 Thread.Sleep(1000);
                 vis.RedrawTopology();
-                lock (eventLogsWriter)
-                    lock (snmpDataWriter)
-                    {
-                        CheckUpdateCurrentLogStream();
-                    }
+                CheckUpdateCurrentLogStream();
             }
         }
 
@@ -354,27 +367,39 @@ namespace SNMP_KERI
         {
             DateTime nowTimestamp = DateTime.Now;
             nowTimestamp = new DateTime(year: nowTimestamp.Year, month: nowTimestamp.Month, day: nowTimestamp.Day, hour: nowTimestamp.Hour, minute: 0, second: 0);
-            string nowStamp = nowTimestamp.ToString("yyyy-MM-dd HH-mm");
+            string nowStamp = nowTimestamp.ToString("yyyy-MM-dd HH-mm", CultureInfo.InvariantCulture);
 
             if (!nowStamp.Equals(openLogStreamStamp))
-                try
-                {
-                    eventLogsWriter?.Flush();
-                    eventLogsWriter?.Close();
-                    snmpDataWriter?.Flush();
-                    snmpDataWriter?.Close();
-                }
-                catch
-                {
+                lock (eventLogsWriter)
+                    lock (snmpDataWriter)
+                        try
+                        {
+                            eventLogsWriter?.Flush();
+                            eventLogsWriter?.Close();
+                            snmpDataWriter?.Flush();
+                            snmpDataWriter?.Close();
+                        }
+                        catch
+                        {
 
-                }
-                finally
-                {
-                    openLogStreamStamp = nowStamp;
-                    eventLogsWriter = new StreamWriter(path: Path.Combine(EVT_LOGS_DIR, $"{nowStamp}.txt"), append: false);
-                    snmpDataWriter = new StreamWriter(path: Path.Combine(SNMP_DATA_DIR, $"{nowStamp}.csv"), append: false);
-                    snmpDataWriter.WriteLine($"Time, IPAddress, LreLinkStatusA, LreLinkStatusB, LrePortAdminStateA, LrePortAdminStateB, LreCntTxA, LreCntTxB , LreCntTxC, LreCntRxA, LreCntRxB, LreCntRxC, LreCntErrorsA, LreCntErrorsB, LreCntErrorsC, LreCntOwnRxA, LreCntOwnRxB{Environment.NewLine}");
-                }
+                        }
+                        finally
+                        {
+                            openLogStreamStamp = nowStamp;
+                            eventLogsWriter = new StreamWriter(path: Path.Combine(EVT_LOGS_DIR, $"{nowStamp}.txt"), append: false);
+                            snmpDataWriter = new StreamWriter(path: Path.Combine(SNMP_DATA_DIR, $"{nowStamp}.csv"), append: false);
+                            snmpDataWriter.WriteLine($"Time, IPAddress, LreLinkStatusA, LreLinkStatusB, LrePortAdminStateA, LrePortAdminStateB, LreCntTxA, LreCntTxB , LreCntTxC, LreCntRxA, LreCntRxB, LreCntRxC, LreCntErrorsA, LreCntErrorsB, LreCntErrorsC, LreCntOwnRxA, LreCntOwnRxB{Environment.NewLine}");
+                        }
+        }
+
+        private static void WriteEventLog(string eventLog)
+        {
+
+        }
+
+        private static void WriteSNMPData(string snmpData)
+        {
+
         }
 
         internal static void ReleaseStreams()
