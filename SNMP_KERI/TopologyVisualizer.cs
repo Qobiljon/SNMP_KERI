@@ -149,15 +149,16 @@ namespace SNMP_KERI
             canvas.FillRectangle(node.portC.brush, node.portC.startLoc.x + 1, node.portC.startLoc.y + 1, pBoxW - 1, pBoxH - 1);
             TopologyLoc center = node.portC.GetCenter();
             string cPortNaming = "C";
-            Font cPortFont = font;
+            //Font cPortFont = font;
             if (node.type == TopologyNode.TpNodeType.REDBOXP || node.type == TopologyNode.TpNodeType.REDBOXH)
                 cPortNaming = "I";
             else if (node.type == TopologyNode.TpNodeType.DANP || node.type == TopologyNode.TpNodeType.DANH || node.type == TopologyNode.TpNodeType.VDANP || node.type == TopologyNode.TpNodeType.VDANH)
             {
-                cPortFont = new Font(font.FontFamily, (int)(font.Size * 0.7));
+                //cPortFont = new Font(font.FontFamily, (int)(font.Size * 0.7));
                 cPortNaming = "L";
             }
-            canvas.DrawString(cPortNaming, cPortFont, Brushes.White, center.x - 8, center.y - 5);
+            // canvas.DrawString(cPortNaming, cPortFont, Brushes.White, center.x - 8, center.y - 5);
+            canvas.DrawString(cPortNaming, font, Brushes.White, center.x - 6, center.y - 5);
 
             // Right port - B
             canvas.DrawRectangle(Pens.Black, node.portB.startLoc.x, node.portB.startLoc.y, pBoxW, pBoxH);
