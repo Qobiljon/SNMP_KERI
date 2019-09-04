@@ -151,11 +151,11 @@ namespace SNMP_KERI
             string cPortNaming = "C";
             Font cPortFont = font;
             if (node.type == TopologyNode.TpNodeType.REDBOXP || node.type == TopologyNode.TpNodeType.REDBOXH)
-                cPortNaming = "IL";
+                cPortNaming = "I";
             else if (node.type == TopologyNode.TpNodeType.DANP || node.type == TopologyNode.TpNodeType.DANH || node.type == TopologyNode.TpNodeType.VDANP || node.type == TopologyNode.TpNodeType.VDANH)
             {
                 cPortFont = new Font(font.FontFamily, (int)(font.Size * 0.7));
-                cPortNaming = "APP";
+                cPortNaming = "L";
             }
             canvas.DrawString(cPortNaming, cPortFont, Brushes.White, center.x - 8, center.y - 5);
 

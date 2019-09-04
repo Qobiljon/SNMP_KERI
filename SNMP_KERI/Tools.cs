@@ -270,9 +270,9 @@ namespace SNMP_KERI
                             {
                                 string cPortNaming = "C";
                                 if (node.type == TopologyVisualizer.TopologyNode.TpNodeType.REDBOXP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.REDBOXH)
-                                    cPortNaming = "IL";
+                                    cPortNaming = "I";
                                 else if (node.type == TopologyVisualizer.TopologyNode.TpNodeType.DANP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.DANH || node.type == TopologyVisualizer.TopologyNode.TpNodeType.VDANP || node.type == TopologyVisualizer.TopologyNode.TpNodeType.VDANH)
-                                    cPortNaming = "APP";
+                                    cPortNaming = "L";
                                 if (lreCntRxC.UnchangedCounter > 5)
                                 {
                                     node.portC.brush = Brushes.DarkRed;
